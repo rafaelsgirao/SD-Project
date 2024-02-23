@@ -14,7 +14,7 @@ public class ClientMain {
         }
 
         // check arguments
-        if (args.length != 3) {
+        if (args.length != 2) { // it was 3 args!!!!!
             System.err.println("Argument(s) missing!");
             System.err.println("Usage: mvn exec:java -Dexec.args=<host> <port>");
             return;
