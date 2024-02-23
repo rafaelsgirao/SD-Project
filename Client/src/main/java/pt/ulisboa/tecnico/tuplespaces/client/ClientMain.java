@@ -1,9 +1,24 @@
 package pt.ulisboa.tecnico.tuplespaces.client;
 
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
+import java.util.Scanner;
 
 public class ClientMain {
+
+    // Debug
+    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+    private static void debug(String message) {
+        if (DEBUG_FLAG) {
+            System.out.println("Debug: " + message);
+        }
+    }
+
     public static void main(String[] args) {
+
 
         System.out.println(ClientMain.class.getSimpleName());
 
@@ -20,12 +35,22 @@ public class ClientMain {
             return;
         }
 
+
         // get the host and the port
         final String host = args[0];
-        final String port = args[1];
+        final int port = Integer.parseInt(args[1]);
+        final String target = host + ":" + port;
+        debug("Target: " + target);
+
+
+        final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+        
+        TupleSpacesGrpc.TupleSpacesBlockingStub stub = TupleSpacesGrpc.newBlockingStub(channel);
+
+        System.out.println("Client started, connecting to " + target);
 
         CommandProcessor parser = new CommandProcessor(new ClientService());
         parser.parseInput();
-
+        channel.shutdownNow();
     }
 }
