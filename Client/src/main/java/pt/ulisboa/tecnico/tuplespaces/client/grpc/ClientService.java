@@ -4,6 +4,8 @@ import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadResponse;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.TakeRequest;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.TakeResponse;
 import pt.ulisboa.tecnico.tuplespaces.client.CommandProcessor;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 import io.grpc.ManagedChannelBuilder;
@@ -36,6 +38,12 @@ public class ClientService {
   public String read(String pattern) {
     ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
     ReadResponse response = stub.read(request);
+    return response.getResult();
+  }
+
+  public String take(String pattern) {
+    TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
+    TakeResponse response = stub.take(request);
     return response.getResult();
   }
 }

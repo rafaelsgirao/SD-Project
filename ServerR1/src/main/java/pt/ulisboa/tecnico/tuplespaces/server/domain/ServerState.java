@@ -38,9 +38,12 @@ public class ServerState {
     return tuple;
   }
 
-  public String take(String pattern) {
-    // TODO
-    return null;
+  public synchronized String take(String pattern) {
+    String tuple = read(pattern);
+    if (tuple != null) {
+      tuples.remove(tuple);
+    }
+    return tuple;
   }
 
   public List<String> getTupleSpacesState() {
