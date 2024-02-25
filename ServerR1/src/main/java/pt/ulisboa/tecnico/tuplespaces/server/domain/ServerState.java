@@ -9,7 +9,6 @@ public class ServerState {
 
   public ServerState() {
     this.tuples = new ArrayList<String>();
-
   }
 
   public synchronized void put(String tuple) {
@@ -44,7 +43,6 @@ public class ServerState {
   }
 
   public List<String> getTupleSpacesState() {
-    // TODO
-    return null;
+    return this.tuples;
   }
 }
