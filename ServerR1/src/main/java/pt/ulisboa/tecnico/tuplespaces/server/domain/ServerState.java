@@ -12,8 +12,9 @@ public class ServerState {
 
   }
 
-  public void put(String tuple) {
+  public synchronized void put(String tuple) {
     tuples.add(tuple);
+    notifyAll();
   }
 
   private String getMatchingTuple(String pattern) {
@@ -25,8 +26,16 @@ public class ServerState {
     return null;
   }
 
-  public String read(String pattern) {
-    return getMatchingTuple(pattern);
+  public synchronized String read(String pattern) {
+    String tuple;
+    while ((tuple = getMatchingTuple(pattern)) == null) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    return tuple;
   }
 
   public String take(String pattern) {

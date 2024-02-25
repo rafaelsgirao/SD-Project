@@ -26,15 +26,9 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
         String pattern = request.getSearchPattern();
         String tuple = state.read(pattern);
-        if (tuple == null) {
-            responseObserver.onError(
-                    NOT_FOUND
-                            .withDescription("No tuple matched given pattern.")
-                            .asRuntimeException());
-        } else {
-            responseObserver.onNext(ReadResponse.newBuilder().setResult(tuple).build());
-            responseObserver.onCompleted();
-        }
+        System.out.println("Tuple read: " + tuple);
+        responseObserver.onNext(ReadResponse.newBuilder().setResult(tuple).build());
+        responseObserver.onCompleted();
     }
 
     @Override
