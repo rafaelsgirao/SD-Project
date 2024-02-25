@@ -31,7 +31,7 @@ public class ClientMain {
         // check arguments
         if (args.length != 2) { // it was 3 args!!!!!
             System.err.println("Argument(s) missing!");
-            System.err.println("Usage: mvn exec:java -Dexec.args=<host> <port>");
+            System.err.println("Usage: mvn exec:java -Dexec.args='<host> <port>'");
             return;
         }
 
@@ -42,15 +42,9 @@ public class ClientMain {
         final String target = host + ":" + port;
         debug("Target: " + target);
 
+        ClientService clientService = new ClientService(target);
 
-        final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        
-        TupleSpacesGrpc.TupleSpacesBlockingStub stub = TupleSpacesGrpc.newBlockingStub(channel);
-
-        System.out.println("Client started, connecting to " + target);
-
-        CommandProcessor parser = new CommandProcessor(new ClientService());
+        CommandProcessor parser = new CommandProcessor(clientService);
         parser.parseInput();
-        channel.shutdownNow();
     }
 }
