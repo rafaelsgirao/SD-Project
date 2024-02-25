@@ -7,6 +7,8 @@ import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadResponse;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.TakeRequest;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.TakeResponse;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.getTupleSpacesStateRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.getTupleSpacesStateResponse;
 
@@ -45,5 +47,11 @@ public class ClientService {
     getTupleSpacesStateResponse response = stub.getTupleSpacesState(request);
 
     return response.getTupleList();
+  }
+
+  public String take(String pattern) {
+    TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
+    TakeResponse response = stub.take(request);
+    return response.getResult();
   }
 }

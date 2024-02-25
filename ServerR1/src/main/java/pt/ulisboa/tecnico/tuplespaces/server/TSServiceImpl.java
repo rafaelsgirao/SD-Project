@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.tuplespaces.server;
 
-import static io.grpc.Status.NOT_FOUND;
 
 import io.grpc.stub.StreamObserver;
 import java.util.List;
@@ -34,17 +33,12 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
 
   @Override
   public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
-    // TODO
+
     String pattern = request.getSearchPattern();
     String tuple = state.take(pattern);
-
-    if (tuple == null) {
-      responseObserver.onError(
-          NOT_FOUND.withDescription("No tuple matched given pattern.").asRuntimeException());
-    } else {
-      responseObserver.onNext(TakeResponse.newBuilder().build());
-      responseObserver.onCompleted();
-    }
+    System.out.println("Tuple taken: " + tuple);
+    responseObserver.onNext(TakeResponse.newBuilder().build());
+    responseObserver.onCompleted();
   }
 
   @Override
