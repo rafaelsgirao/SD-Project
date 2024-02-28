@@ -54,13 +54,12 @@
               javaPkg
               mavenPkg
               git
-              # buf
-              # (python3.withPackages
-              # (ps: with ps; with python3Packages; [ grpcio grpcio-tools ]))
 
-              # protobuf
-              # protobufc
-              # sbt
+
+              (pkgs.python3.withPackages (python-pkgs: [
+                python-pkgs.grpcio
+                python-pkgs.grpcio-tools
+              ]))
             ];
 
             shellHook = ''
