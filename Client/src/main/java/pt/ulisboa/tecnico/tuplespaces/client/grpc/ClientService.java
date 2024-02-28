@@ -27,7 +27,7 @@ public class ClientService {
     this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
     this.stub = TupleSpacesGrpc.newBlockingStub(channel);
 
-    System.out.println("Client started, connecting to " + target);
+    
   }
 
   public void put(String tuple) {

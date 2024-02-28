@@ -1,5 +1,8 @@
 package pt.ulisboa.tecnico.tuplespaces.client;
 
+import pt.tecnico.grpc.NameServer.LookupRequest;
+import pt.tecnico.grpc.NameServer.LookupResponse;
+import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 import io.grpc.ManagedChannelBuilder;
@@ -28,23 +31,47 @@ public class ClientMain {
             System.out.printf("arg[%d] = %s%n", i, args[i]);
         }
 
-        // check arguments
-        if (args.length != 2) { // it was 3 args!!!!!
-            System.err.println("Argument(s) missing!");
-            System.err.println("Usage: mvn exec:java -Dexec.args='<host> <port>'");
-            return;
-        }
-
-
-        // get the host and the port
-        final String host = args[0];
-        final int port = Integer.parseInt(args[1]);
+        
+        final String host = "localhost";
+        final int port = 5001;
         final String target = host + ":" + port;
         debug("Target: " + target);
 
-        ClientService clientService = new ClientService(target);
+        // Connect to Name Server
+    final ManagedChannel channel_ns =
+        ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+    NameServerServiceGrpc.NameServerServiceBlockingStub NSstub =
+        NameServerServiceGrpc.newBlockingStub(channel_ns);
 
-        CommandProcessor parser = new CommandProcessor(clientService);
-        parser.parseInput();
+    // Lookup server
+    LookupRequest request_ns =
+        LookupRequest.newBuilder().setName("TupleSpaces").setQualifier("A").build();
+    LookupResponse response_ns = NSstub.lookup(request_ns);
+    System.out.println(response_ns.getResultList());
+
+    if (response_ns.getResultList().size() != 0) {
+      // Channel is the abstraction to connect to a service endpoint
+      // Let us use plaintext communication because we do not have certificates
+      final String target_ts = response_ns.getResultList().get(0);
+      final ManagedChannel channel =
+          ManagedChannelBuilder.forTarget(target_ts).usePlaintext().build();
+
+      // It is up to the client to determine whether to block the call
+      // Here we create a blocking stub, but an async stub,
+      // or an async stub with Future are always possible.
+    	TupleSpacesGrpc.TupleSpacesBlockingStub stub = TupleSpacesGrpc.newBlockingStub(channel);
+      System.out.println("Client started, connecting to " + target_ts);
+
+      ClientService clientService = new ClientService(target_ts);
+      CommandProcessor parser = new CommandProcessor(clientService);
+			
+      parser.parseInput();
+      channel.shutdownNow();
+    } else {
+      System.out.println("No server provides such service.");
+    }
+    // A Channel should be shutdown before stopping the process.
+    channel_ns.shutdownNow();
+  
     }
 }
