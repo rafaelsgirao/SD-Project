@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.grpc.NameServer.*;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 
@@ -57,45 +58,47 @@ public class ServerMain {
             .setQualifier(qualifier)
             .setAddress(target)
             .build();
-    RegisterResponse response = stub.register(request);
-    System.out.println(response.getResult());
 
-    if (response.getResult().isEmpty()) {
-      // Create a new server to listen on port.
-      Server server = ServerBuilder.forPort(port).addService(impl).build();
-
-      // Add shutdown hook
-      Runtime.getRuntime()
-          .addShutdownHook(
-              new Thread(
-                  () -> {
-                    System.out.println("Shutting down server...");
-                    try {
-                      server.shutdown().awaitTermination();
-                      System.out.println("Server shutdown complete.");
-
-                      System.out.println("Unregistering server...");
-                      DeleteRequest delete_request =
-                          DeleteRequest.newBuilder()
-                              .setName(service_name)
-                              .setAddress(target)
-                              .build();
-                      DeleteResponse delete_response = stub.delete(delete_request);
-                      System.out.println("Server unregistered successfully.");
-                    } catch (Exception e) {
-                      System.out.println("Error during shutdown: " + e.getMessage());
-                    }
-                  }));
-
-      // Start the server.
-      server.start();
-      // Server threads are running in the background.
-      System.out.println("Server started");
-
-      // Do not exit the main thread. Wait until server is terminated.
-      server.awaitTermination();
-    } else {
-      System.out.println("Error registering server");
+    try {
+      stub.register(request);
+    } catch (StatusRuntimeException e) {
+      System.out.println("Failed to register server.");
+      System.out.println(e.getMessage());
     }
+
+    // Create a new server to listen on port.
+    Server server = ServerBuilder.forPort(port).addService(impl).build();
+
+    // Add shutdown hook
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  System.out.println("Shutting down server...");
+                  try {
+                    server.shutdown().awaitTermination();
+                    System.out.println("Server shutdown complete.");
+
+                    System.out.println("Unregistering server...");
+                    DeleteRequest delete_request =
+                        DeleteRequest.newBuilder().setName(service_name).setAddress(target).build();
+                    try {
+                      DeleteResponse delete_response = stub.delete(delete_request);
+                    } catch (StatusRuntimeException e) {
+                      System.out.println(e.getMessage());
+                    }
+                    System.out.println("Server unregistered successfully.");
+                  } catch (Exception e) {
+                    System.out.println("Error during shutdown: " + e.getMessage());
+                  }
+                }));
+
+    // Start the server.
+    server.start();
+    // Server threads are running in the background.
+    System.out.println("Server started");
+
+    // Do not exit the main thread. Wait until server is terminated.
+    server.awaitTermination();
   }
 }

@@ -9,7 +9,6 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
-  string result = 1;
 }
 
 message LookupRequest {
