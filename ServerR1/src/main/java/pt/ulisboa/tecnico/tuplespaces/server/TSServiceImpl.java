@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.tuplespaces.server;
 
-
 import io.grpc.stub.StreamObserver;
 import java.util.List;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.*;
@@ -47,6 +46,7 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
       StreamObserver<getTupleSpacesStateResponse> responseObserver) {
 
     List<String> spacesState = state.getTupleSpacesState();
+    System.out.println("Tuple spaces state: " + spacesState);
 
     responseObserver.onNext(
         getTupleSpacesStateResponse.newBuilder().addAllTuple(spacesState).build());
