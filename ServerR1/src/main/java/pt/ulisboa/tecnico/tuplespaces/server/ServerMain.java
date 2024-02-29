@@ -1,11 +1,10 @@
 package pt.ulisboa.tecnico.tuplespaces.server;
 
 import io.grpc.BindableService;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.concurrent.TimeUnit;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import pt.tecnico.grpc.NameServer.*;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 
@@ -61,26 +60,40 @@ public class ServerMain {
     RegisterResponse response = stub.register(request);
     System.out.println(response.getResult());
 
-    if (response.getResult() == "") {
+    if (response.getResult().isEmpty()) {
       // Create a new server to listen on port.
       Server server = ServerBuilder.forPort(port).addService(impl).build();
+
+      // Add shutdown hook
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    System.out.println("Shutting down server...");
+                    try {
+                      server.shutdown().awaitTermination();
+                      System.out.println("Server shutdown complete.");
+
+                      System.out.println("Unregistering server...");
+                      DeleteRequest delete_request =
+                          DeleteRequest.newBuilder()
+                              .setName(service_name)
+                              .setAddress(target)
+                              .build();
+                      DeleteResponse delete_response = stub.delete(delete_request);
+                      System.out.println("Server unregistered successfully.");
+                    } catch (Exception e) {
+                      System.out.println("Error during shutdown: " + e.getMessage());
+                    }
+                  }));
+
       // Start the server.
       server.start();
       // Server threads are running in the background.
       System.out.println("Server started");
 
       // Do not exit the main thread. Wait until server is terminated.
-      // CHANGE THIS  
-      server.awaitTermination(100000, TimeUnit.SECONDS);
-      System.out.println("Server stopped");
-      try {
-        DeleteRequest delete_request =
-            DeleteRequest.newBuilder().setName(service_name).setAddress(target).build();
-        DeleteResponse delete_response = stub.delete(delete_request);
-      } catch (Exception e) {
-        System.out.println("Error deleting server");
-      }
-      System.exit(0);
+      server.awaitTermination();
     } else {
       System.out.println("Error registering server");
     }
