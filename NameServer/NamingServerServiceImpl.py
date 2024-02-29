@@ -10,15 +10,12 @@ class ServerEntry:
 		self.qualifier = qualifier # A, B or C
 
 class ServiceEntry:
-	serviceName = ""
-	server_entries = [] 
-	
 	def __init__(self, name, server_entries):
 		self.serviceName = name
 		self.server_entries = server_entries
 
 class NamingServer:
-  name_map = []  # list of Service Entry
+  services = []  # list of Service Entries
 
 class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 	def __init__(self, *args, **kwargs):
@@ -34,7 +31,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 			
 			server = ServerEntry(address, qualifier)
 			# check  if the name is already registered with that server
-			for entry in self.namingServer.name_map:
+			for entry in self.namingServer.services:
 					if entry.serviceName == name:
 							# service already registered
 							if (qualifier in entry.server_entries):
@@ -45,7 +42,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 			
 			# no service found -> create new service
 			service = ServiceEntry(name, [server])
-			self.namingServer.name_map.append(service)
+			self.namingServer.services.append(service)
 			
 			return pb2.RegisterResponse(result='')
 		
@@ -56,7 +53,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 		qualifier = request.qualifier
 		result = []
 		# check if the name is registered
-		for entry in self.namingServer.name_map:
+		for entry in self.namingServer.services:
 			if entry.serviceName == name:
 				# service found
 				for server in entry.server_entries:
@@ -81,7 +78,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 		name = request.name
 		address = request.address
 		
-		for entry in self.namingServer.name_map:
+		for entry in self.namingServer.services:
 			if entry.serviceName == name:
 				# service found
 				for server in entry.server_entries:
