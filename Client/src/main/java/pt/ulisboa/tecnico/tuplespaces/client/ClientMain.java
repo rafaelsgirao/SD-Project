@@ -21,16 +21,30 @@ public class ClientMain {
 
   public static void main(String[] args) {
 
-    System.out.println(ClientMain.class.getSimpleName());
-
     // receive and print arguments
-    System.out.printf("Received %d arguments%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("arg[%d] = %s%n", i, args[i]);
+    debug("Received" + args.length + "arguments");
+    if (DEBUG_FLAG) {
+      for (int i = 0; i < args.length; i++) {
+        System.out.printf("arg[%d] = %s%n", i, args[i]);
+      }
     }
 
+    // check arguments
+    if (args.length != 2) { // it was 3 args!!!!!
+      System.err.println("Argument(s) missing!");
+      System.err.println("Usage: mvn exec:java -Dexec.args='<host> <port>'");
+      return;
+    }
     final String host = "localhost";
     final int port = 5001;
+
+    /*
+     *
+     *        // get the host and the port
+    final String host = args[0];
+    final int port = Integer.parseInt(args[1]);
+     */
+
     final String target = host + ":" + port;
     debug("Target: " + target);
 
@@ -58,7 +72,7 @@ public class ClientMain {
       // Here we create a blocking stub, but an async stub,
       // or an async stub with Future are always possible.
       TupleSpacesGrpc.TupleSpacesBlockingStub stub = TupleSpacesGrpc.newBlockingStub(channel);
-      System.out.println("Client started, connecting to " + target_ts);
+      debug("Client started, connecting to " + target_ts);
 
       ClientService clientService = new ClientService(target_ts);
       CommandProcessor parser = new CommandProcessor(clientService);
@@ -66,7 +80,7 @@ public class ClientMain {
       parser.parseInput();
       channel.shutdownNow();
     } else {
-      System.out.println("No server provides such service.");
+      debug("No server provides such service.");
     }
     // A Channel should be shutdown before stopping the process.
     channel_ns.shutdownNow();

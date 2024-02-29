@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.tuplespaces.client;
 
-import java.util.List;
 import java.util.Scanner;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 
@@ -68,6 +67,11 @@ public class CommandProcessor {
     }
   }
 
+  private void showResult(String result) {
+    System.out.println("OK\n");
+    System.out.println(result);
+  }
+
   private void put(String[] split) {
 
     // check if input is valid
@@ -80,7 +84,8 @@ public class CommandProcessor {
     String tuple = split[1];
 
     // put the tuple
-    clientService.put(tuple);
+    String result = clientService.put(tuple);
+    showResult(result);
   }
 
   private void read(String[] split) {
@@ -94,7 +99,8 @@ public class CommandProcessor {
     String tuple = split[1];
 
     // read the tuple
-    clientService.read(tuple);
+    String result = clientService.read(tuple);
+    showResult(result);
   }
 
   private void take(String[] split) {
@@ -108,7 +114,9 @@ public class CommandProcessor {
     String tuple = split[1];
 
     // take the tuple
-    clientService.take(tuple);
+
+    String result = clientService.take(tuple);
+    showResult(result);
   }
 
   private void getTupleSpacesState(String[] split) {
@@ -120,9 +128,8 @@ public class CommandProcessor {
     String qualifier = split[1];
 
     // get the tuple spaces state
-    List<String> spacesState = clientService.getTupleSpacesState();
-
-    System.out.println(spacesState.toString());
+    String result = clientService.getTupleSpacesState().toString();
+    showResult(result);
   }
 
   private void sleep(String[] split) {

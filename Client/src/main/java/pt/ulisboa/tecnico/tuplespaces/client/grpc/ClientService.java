@@ -5,6 +5,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.List;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutResponse;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadResponse;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.TakeRequest;
@@ -13,6 +14,8 @@ import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralize
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.getTupleSpacesStateResponse;
 
 public class ClientService {
+
+  private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
   /*
    * TODO: The gRPC client-side logic should be here.
@@ -23,16 +26,23 @@ public class ClientService {
   private final ManagedChannel channel;
   private final TupleSpacesGrpc.TupleSpacesBlockingStub stub;
 
+  private static void debug(String message) {
+    if (DEBUG_FLAG) {
+      System.out.println("Debug: " + message);
+    }
+  }
+
   public ClientService(String target) {
     this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
     this.stub = TupleSpacesGrpc.newBlockingStub(channel);
 
-    
+    debug("Client started, connecting to " + target);
   }
 
-  public void put(String tuple) {
+  public String put(String tuple) {
     PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
-    stub.put(request);
+    PutResponse response = stub.put(request);
+    return response.toString();
   }
 
   public String read(String pattern) {
@@ -52,6 +62,7 @@ public class ClientService {
   public String take(String pattern) {
     TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
     TakeResponse response = stub.take(request);
-    return response.getResult();
+    // return response.getResult();
+    return response.toString();
   }
 }
