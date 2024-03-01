@@ -23,9 +23,9 @@ for i in {1..5}; do
 
   DIFF=$(diff ${TESTS_OUTPUT}/out$TEST.txt ${TESTS_OUT_EXPECTED}/out$TEST.txt)
   if [ "$DIFF" != "" ]; then
-    echo "${RED}[$TEST] TEST FAILED${NC}"
+    echo -e "${RED}[$TEST] TEST FAILED${NC}"
   else
-    echo "${GREEN}[$TEST] TEST PASSED${NC}"
+    echo -e "${GREEN}[$TEST] TEST PASSED${NC}"
   fi
 done
 
