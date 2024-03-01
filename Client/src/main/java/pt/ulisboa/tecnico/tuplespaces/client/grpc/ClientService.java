@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import java.util.List;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
@@ -41,13 +42,13 @@ public class ClientService {
     channel.shutdownNow();
   }
 
-  public String put(String tuple) {
+  public String put(String tuple) throws StatusRuntimeException {
     PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
     PutResponse response = stub.put(request);
     return response.toString();
   }
 
-  public String read(String pattern) {
+  public String read(String pattern) throws StatusRuntimeException {
     ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
     ReadResponse response = stub.read(request);
     return response.getResult();
@@ -59,7 +60,7 @@ public class ClientService {
     return response.getTupleList();
   }
 
-  public String take(String pattern) {
+  public String take(String pattern) throws StatusRuntimeException {
     TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
     TakeResponse response = stub.take(request);
     return response.getResult();
