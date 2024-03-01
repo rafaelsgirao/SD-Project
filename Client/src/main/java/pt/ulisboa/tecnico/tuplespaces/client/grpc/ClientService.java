@@ -53,16 +53,15 @@ public class ClientService {
 
   public List<String> getTupleSpacesState() {
     getTupleSpacesStateRequest request = getTupleSpacesStateRequest.getDefaultInstance();
-
     getTupleSpacesStateResponse response = stub.getTupleSpacesState(request);
-
     return response.getTupleList();
   }
 
   public String take(String pattern) {
     TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
     TakeResponse response = stub.take(request);
-    // return response.getResult();
-    return response.toString();
+    //  System.out.println("DEBUG: Took tuple from server" + response.getResult());
+    return response.getResult();
+    //  return response.toString();
   }
 }

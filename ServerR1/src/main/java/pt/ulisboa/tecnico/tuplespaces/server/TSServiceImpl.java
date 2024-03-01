@@ -36,7 +36,7 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
     String pattern = request.getSearchPattern();
     String tuple = state.take(pattern);
     System.out.println("Tuple taken: " + tuple);
-    responseObserver.onNext(TakeResponse.newBuilder().build());
+    responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
     responseObserver.onCompleted();
   }
 

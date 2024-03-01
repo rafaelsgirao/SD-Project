@@ -68,8 +68,12 @@ public class CommandProcessor {
   }
 
   private void showResult(String result) {
-    System.out.println("OK\n");
+    System.out.println("OK");
     System.out.println(result);
+
+    if (!result.equals("")) {
+      System.out.println();
+    }
   }
 
   private void put(String[] split) {

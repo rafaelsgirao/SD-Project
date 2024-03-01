@@ -38,13 +38,6 @@ public class ClientMain {
     final String host = "localhost";
     final int port = 5001;
 
-    /*
-     *
-     *        // get the host and the port
-    final String host = args[0];
-    final int port = Integer.parseInt(args[1]);
-     */
-
     final String target = host + ":" + port;
     debug("Target: " + target);
 
@@ -58,7 +51,7 @@ public class ClientMain {
     LookupRequest request_ns =
         LookupRequest.newBuilder().setName("TupleSpaces").setQualifier("A").build();
     LookupResponse response_ns = NSstub.lookup(request_ns);
-    System.out.println(response_ns.getResultList());
+    debug(response_ns.getResultList().toString());
 
     if (response_ns.getResultList().size() != 0) {
 

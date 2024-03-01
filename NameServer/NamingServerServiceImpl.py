@@ -42,9 +42,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                     print(f"Warning: server {name} @ {address} not found!")
                     context.set_code(StatusCode.ALREADY_EXISTS)
                     context.set_details('Not possible to register the server')
-                    # print("Warning: attempted to register qualifier twice.")
                     return
-                    # return pb2.RegisterResponse(result='Service already registered')
                 else:
                     entry.server_entries.append(server)
                     return pb2.RegisterResponse()
@@ -53,7 +51,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         service = ServiceEntry(name, [server])
         self.namingServer.services.append(service)
 
-        return pb2.RegisterResponse(result='')
+        return pb2.RegisterResponse()
 
     def lookup(self, request, context):
         print(request)  # received request
