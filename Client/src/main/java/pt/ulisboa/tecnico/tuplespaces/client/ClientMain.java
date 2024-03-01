@@ -53,18 +53,11 @@ public class ClientMain {
     LookupResponse response_ns = NSstub.lookup(request_ns);
     debug(response_ns.getResultList().toString());
 
-    if (response_ns.getResultList().size() != 0) {
+    if (response_ns.getResultList().isEmpty()) {
 
       // Channel is the abstraction to connect to a service endpoint
       // Let us use plaintext communication because we do not have certificates
       final String target_ts = response_ns.getResultList().get(0);
-      final ManagedChannel channel =
-          ManagedChannelBuilder.forTarget(target_ts).usePlaintext().build();
-
-      // It is up to the client to determine whether to block the call
-      // Here we create a blocking stub, but an async stub,
-      // or an async stub with Future are always possible.
-      TupleSpacesGrpc.TupleSpacesBlockingStub stub = TupleSpacesGrpc.newBlockingStub(channel);
       debug("Client started, connecting to " + target_ts);
 
       ClientService clientService = new ClientService(target_ts);

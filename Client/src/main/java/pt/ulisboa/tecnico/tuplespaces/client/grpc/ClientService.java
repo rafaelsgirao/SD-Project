@@ -60,8 +60,6 @@ public class ClientService {
   public String take(String pattern) {
     TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
     TakeResponse response = stub.take(request);
-    //  System.out.println("DEBUG: Took tuple from server" + response.getResult());
     return response.getResult();
-    //  return response.toString();
   }
 }

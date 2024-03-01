@@ -22,47 +22,48 @@ public class CommandProcessor {
     this.clientService = clientService;
   }
 
-  void parseInput() {
+  void parseInput() throws InterruptedException {
 
-    Scanner scanner = new Scanner(System.in);
-    boolean exit = false;
+    try (Scanner scanner = new Scanner(System.in)) {
+      boolean exit = false;
 
-    while (!exit) {
-      System.out.print("> ");
-      String line = scanner.nextLine().trim();
-      String[] split = line.split(SPACE);
-      switch (split[0]) {
-        case PUT:
-          this.put(split);
-          break;
+      while (!exit) {
+        System.out.print("> ");
+        String line = scanner.nextLine().trim();
+        String[] split = line.split(SPACE);
+        switch (split[0]) {
+          case PUT:
+            this.put(split);
+            break;
 
-        case READ:
-          this.read(split);
-          break;
+          case READ:
+            this.read(split);
+            break;
 
-        case TAKE:
-          this.take(split);
-          break;
+          case TAKE:
+            this.take(split);
+            break;
 
-        case GET_TUPLE_SPACES_STATE:
-          this.getTupleSpacesState(split);
-          break;
+          case GET_TUPLE_SPACES_STATE:
+            this.getTupleSpacesState(split);
+            break;
 
-        case SLEEP:
-          this.sleep(split);
-          break;
+          case SLEEP:
+            this.sleep(split);
+            break;
 
-        case SET_DELAY:
-          this.setdelay(split);
-          break;
+          case SET_DELAY:
+            this.setdelay(split);
+            break;
 
-        case EXIT:
-          exit = true;
-          break;
+          case EXIT:
+            exit = true;
+            break;
 
-        default:
-          this.printUsage();
-          break;
+          default:
+            this.printUsage();
+            break;
+        }
       }
     }
   }
@@ -129,14 +130,13 @@ public class CommandProcessor {
       this.printUsage();
       return;
     }
-    String qualifier = split[1];
 
     // get the tuple spaces state
     String result = clientService.getTupleSpacesState().toString();
     showResult(result);
   }
 
-  private void sleep(String[] split) {
+  private void sleep(String[] split) throws InterruptedException {
     if (split.length != 2) {
       this.printUsage();
       return;
@@ -151,11 +151,7 @@ public class CommandProcessor {
       return;
     }
 
-    try {
-      Thread.sleep(time * 1000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    Thread.sleep(time * 1000); // may throw InterruptedException
   }
 
   private void setdelay(String[] split) {
