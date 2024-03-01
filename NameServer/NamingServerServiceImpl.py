@@ -2,32 +2,32 @@ from grpc import StatusCode
 import NameServer_pb2_grpc as pb2_grpc
 import NameServer_pb2 as pb2
 import sys
-sys.path.insert(1, '../contract/target/generated-sources/protobuf/python')
+
+sys.path.insert(1, "../contract/target/generated-sources/protobuf/python")
 import threading
 
 
 class ServerEntry:
     def __init__(self, address, qualifier):
-        self.address = address   # -> host:port
+        self.address = address  # -> host:port
         self.qualifier = qualifier  # A, B or C
 
 
 class ServiceEntry:
     def __init__(self, name, server_entries):
-        self.serviceName = name
+        self.service_name = name
         self.server_entries = server_entries
 
 
 class NamingServer:
     def __init__(self):
-        self.lock = threading.Lock() # lock for the service list
+        self.lock = threading.Lock()  # lock for the service list
         self.services = []  # list of Service Entries
 
 
 class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
     def __init__(self, *args, **kwargs):
         self.namingServer = NamingServer()
-        pass
 
     def register(self, request, context):
         print(request)  # received request
@@ -37,16 +37,16 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         address = request.address
 
         server = ServerEntry(address, qualifier)
-        
+
         self.namingServer.lock.acquire()
         # check  if the name is already registered with that server
         for entry in self.namingServer.services:
-            if entry.serviceName == name:
+            if entry.service_name == name:
                 # service already registered
-                if (qualifier in entry.server_entries):
+                if qualifier in entry.server_entries:
                     print(f"Warning: server {name} @ {address} not found!")
                     context.set_code(StatusCode.ALREADY_EXISTS)
-                    context.set_details('Not possible to register the server')
+                    context.set_details("Not possible to register the server")
                     self.namingServer.lock.release()
                     return
                 else:
@@ -68,20 +68,21 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         result = []
         # check if the name is registered
         for entry in self.namingServer.services:
-            if entry.serviceName == name:
+            if entry.service_name == name:
                 # service found
                 for server in entry.server_entries:
                     # qualifier found
                     if server.qualifier == qualifier:
                         result.append(server.address)
 
-                if (len(result) > 0):
+                if len(result) > 0:
                     return pb2.LookupResponse(result=result)
                 else:
                     # qualifier not found
                     # get all server addresses from server entries
                     server_addresses = [
-                        server.address for server in entry.server_entries]
+                        server.address for server in entry.server_entries
+                    ]
                     return pb2.LookupResponse(result=server_addresses)
 
         # neither qualifier nor service found
@@ -95,7 +96,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 
         self.namingServer.lock.acquire()
         for entry in self.namingServer.services:
-            if entry.serviceName == name:
+            if entry.service_name == name:
                 # service found
                 for server in entry.server_entries:
                     # qualifier found
@@ -109,6 +110,5 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
 
         print(f"Server {name} @ {address} not found!")
         context.set_code(StatusCode.NOT_FOUND)
-        context.set_details('Not possible to remove the server')
+        context.set_details("Not possible to remove the server")
         self.namingServer.lock.release()
-        return

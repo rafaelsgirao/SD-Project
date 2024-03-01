@@ -92,6 +92,8 @@
           google-java-format.enable = true;
           deadnix.enable = true;
           statix.enable = true;
+          black.enable = true;
+          # ruff.enable = true;
         };
       };
     };
