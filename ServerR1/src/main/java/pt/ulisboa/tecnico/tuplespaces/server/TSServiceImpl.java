@@ -87,7 +87,9 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
   }
 
   private boolean tupleIsValid(String input) {
-    if (!input.substring(0, 1).equals(BGN_TUPLE) || !input.endsWith(END_TUPLE)) {
+    if (input.contains(" ")
+        || !input.substring(0, 1).equals(BGN_TUPLE)
+        || !input.endsWith(END_TUPLE)) {
       return false;
     }
     return true;
