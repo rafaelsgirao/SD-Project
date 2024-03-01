@@ -150,7 +150,7 @@ public class CommandProcessor {
       this.printUsage();
       return;
     }
-
+    
     Thread.sleep(time * 1000); // may throw InterruptedException
   }
 

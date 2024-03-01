@@ -62,9 +62,15 @@ public class ClientMain {
 
       ClientService clientService = new ClientService(target_ts);
       CommandProcessor parser = new CommandProcessor(clientService);
-
-      parser.parseInput();
-      channel.shutdownNow();
+      try {
+        parser.parseInput();
+      }
+      catch (InterruptedException e) {
+        System.err.println("Program interrupted. Quitting.");
+        System.exit(1);
+      }
+			
+      clientService.shutdown();
     } else {
       debug("No server provides such service.");
     }
