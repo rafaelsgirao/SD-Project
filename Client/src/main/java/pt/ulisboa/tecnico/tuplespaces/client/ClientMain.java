@@ -53,7 +53,7 @@ public class ClientMain {
     LookupResponse response_ns = NSstub.lookup(request_ns);
     debug(response_ns.getResultList().toString());
 
-    if (response_ns.getResultList().isEmpty()) {
+    if (!response_ns.getResultList().isEmpty()) {
 
       // Channel is the abstraction to connect to a service endpoint
       // Let us use plaintext communication because we do not have certificates
@@ -64,12 +64,11 @@ public class ClientMain {
       CommandProcessor parser = new CommandProcessor(clientService);
       try {
         parser.parseInput();
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
         System.err.println("Program interrupted. Quitting.");
         System.exit(1);
       }
-			
+
       clientService.shutdown();
     } else {
       debug("No server provides such service.");

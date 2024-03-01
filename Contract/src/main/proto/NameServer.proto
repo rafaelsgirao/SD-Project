@@ -5,7 +5,6 @@ message RegisterRequest {
   string name = 1; // name service
   string qualifier = 2;
   string address = 3;  // host:port
-
 }
 
 message RegisterResponse {

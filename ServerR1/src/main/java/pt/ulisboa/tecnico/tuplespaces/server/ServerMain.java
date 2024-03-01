@@ -33,9 +33,9 @@ public class ServerMain {
     }
 
     // Check arguments.
-    if (args.length < 3) {
-      System.err.println("Argument(s) missing!");
-      System.err.printf("Usage: java %s port%n", Server.class.getName());
+    if (args.length != 4) {
+      System.err.println("Incorrect arguments!");
+      System.err.printf("Usage: java %s port qualifier%n", Server.class.getName());
       return;
     }
 
