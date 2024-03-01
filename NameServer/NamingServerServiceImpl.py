@@ -72,6 +72,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         qualifier = request.qualifier
         result = []
 
+        self.namingServer.lock.acquire()
         for entry in self.namingServer.services:
             # check if the service name is already registered
             if entry.service_name == name:
@@ -86,6 +87,8 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                 if len(result) > 0:
                     for r in result:
                         print(f"Qualifier {qualifier} found for server {name} @ {r}")
+
+                    self.namingServer.lock.release()
                     return pb2.LookupResponse(result=result)
 
                 # if there are no qualifiers, return all addresses
@@ -94,10 +97,14 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                         server.address for server in entry.server_entries
                     ]
                     print(f"Qualifier {qualifier} not found for server {name}")
+
+                    self.namingServer.lock.release()
                     return pb2.LookupResponse(result=server_addresses)
 
         # neither qualifier nor service found
         print(f"Server {name} not found!")
+
+        self.namingServer.lock.release()
         return pb2.LookupResponse(result=[])
 
     def delete(self, request, context):
