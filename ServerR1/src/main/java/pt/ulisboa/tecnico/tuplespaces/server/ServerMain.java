@@ -37,7 +37,7 @@ public class ServerMain {
 
   private static void debug(String message) {
     if (DEBUG_FLAG) {
-      System.err.println("\033[1;32;40m" + "Debug: " + message + "\033[m");
+      System.err.println("\033[1;32;40m" + "DEBUG: " + message + "\033[m");
     }
   }
 
