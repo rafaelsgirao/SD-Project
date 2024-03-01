@@ -29,9 +29,6 @@ public class ServerMain {
   // NameServer target (host:port)
   private static String NAMESERVER_TARGET = "localhost:5001";
 
-  /* Target Name Server */
-  private static String target_ns = host_ns + ":" + port_ns;
-
   // ----------- DEBUG ----------------
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
