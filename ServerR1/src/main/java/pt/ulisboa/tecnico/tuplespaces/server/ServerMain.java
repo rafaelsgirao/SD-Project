@@ -11,30 +11,25 @@ import pt.tecnico.grpc.NameServerServiceGrpc;
 
 public class ServerMain {
 
-  /** Server host. */
+  // Server host
   private static String host;
 
-  /** Server host port. */
+  // Server port
   private static int port;
 
-  /** Server qualifier. */
+  // Server qualifier
   private static String qualifier;
 
-  /** Server service name. */
+  // Service name
   private static String service_name;
 
-  /** Server target. */
+  // Server target (host:port)
   private static String target;
 
-  /** Name Server Host */
-  private static String host_ns = "localhost";
+  // NameServer target (host:port)
+  private static String NAMESERVER_TARGET = "localhost:5001";
 
-  /** Name Server Port */
-  private static int port_ns = 5001;
-
-  /* Target Name Server */
-  private static String target_ns = host_ns + ":" + port_ns;
-
+  // Debug flag
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
   private static void debug(String message) {
@@ -53,21 +48,22 @@ public class ServerMain {
     }
 
     // Check arguments.
-    if (args.length != 4) {
+    if (args.length != 2) {
       System.err.println("Incorrect arguments!");
       System.err.printf("Usage: java %s port qualifier%n", Server.class.getName());
       return;
     }
 
-    host = args[0];
-    port = Integer.valueOf(args[1]);
-    qualifier = args[2]; // not used for phase 1
-    service_name = args[3];
+    host = "localhost";
+    port = Integer.valueOf(args[0]);
+    // qualifier = args[1]; // not used for phase 1
+    qualifier = "A";
+    service_name = "TupleSpaces";
     target = host + ":" + port;
 
-    // Register in Naming server
+    // Register in naming server
     final ManagedChannel channel_ns =
-        ManagedChannelBuilder.forTarget(target_ns).usePlaintext().build();
+        ManagedChannelBuilder.forTarget(NAMESERVER_TARGET).usePlaintext().build();
     NameServerServiceGrpc.NameServerServiceBlockingStub stub =
         NameServerServiceGrpc.newBlockingStub(channel_ns);
 
@@ -75,7 +71,7 @@ public class ServerMain {
     RegisterRequest request =
         RegisterRequest.newBuilder()
             .setName(service_name)
-            .setQualifier("A") // qualifier not used for phase 1
+            .setQualifier(qualifier) // qualifier not used for phase 1
             .setAddress(target)
             .build();
 
@@ -90,7 +86,7 @@ public class ServerMain {
     final BindableService impl = new TSServiceImpl();
     Server server = ServerBuilder.forPort(port).addService(impl).build();
 
-    // Add shutdown hook
+    // Unregister server when exiting the program.
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
@@ -116,6 +112,7 @@ public class ServerMain {
 
     // Start the server.
     server.start();
+
     // Server threads are running in the background.
     System.out.println("Server started");
 
