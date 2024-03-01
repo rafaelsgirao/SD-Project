@@ -22,9 +22,9 @@ if __name__ == "__main__":
             for i in range(1, len(sys.argv)):
                 debug("Argument: " + sys.argv[i])
 
-        if len(sys.argv) != 1:
-            print("ERROR: No arguments are accepted. Correct usage:")
-            print(f"python {sys.argv[0]}")
+        if len(sys.argv) not in (1, 2):
+            print("ERROR: Incorrect arguments. Correct usage:")
+            print(f"python {sys.argv[0]} [-debug]")
             sys.exit(1)
         # create server
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
