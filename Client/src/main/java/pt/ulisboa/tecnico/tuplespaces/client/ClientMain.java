@@ -18,14 +18,16 @@ public class ClientMain {
   private static final String QUALIFIER = "A";
   // Server's Service name
   private static final String SERVICE_NAME = "TupleSpaces";
-  // Debug flag
+  // ----------- DEBUG ---------------- 
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
   private static void debug(String message) {
     if (DEBUG_FLAG) {
-      System.err.println("Debug: " + message);
+      System.out.println("\033[1;32;40m" + "Debug: " + message + "\033[m");
     }
   }
+
+  // ---------------------------------
 
   public static void main(String[] args) {
 

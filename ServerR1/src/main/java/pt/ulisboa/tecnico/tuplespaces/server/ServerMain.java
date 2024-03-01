@@ -29,14 +29,19 @@ public class ServerMain {
   // NameServer target (host:port)
   private static String NAMESERVER_TARGET = "localhost:5001";
 
-  // Debug flag
+  /* Target Name Server */
+  private static String target_ns = host_ns + ":" + port_ns;
+
+  // ----------- DEBUG ----------------
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
   private static void debug(String message) {
     if (DEBUG_FLAG) {
-      System.err.println("Debug: " + message);
+      System.out.println("\033[1;32;40m" + "Debug: " + message + "\033[m");
     }
   }
+
+  // ---------------------------------
 
   public static void main(String[] args) throws Exception {
     // Print received arguments.

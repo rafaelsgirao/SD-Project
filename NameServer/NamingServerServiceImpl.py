@@ -1,10 +1,11 @@
+import threading
 from grpc import StatusCode
 import NameServer_pb2_grpc as pb2_grpc
 import NameServer_pb2 as pb2
 import sys
+from debug import debug
 
 sys.path.insert(1, "../contract/target/generated-sources/protobuf/python")
-import threading
 
 
 class ServerEntry:
@@ -30,7 +31,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         self.namingServer = NamingServer()
 
     def register(self, request, context):
-        print(request)  # received request
+        debug(request)  # received request
 
         name = request.name
         qualifier = request.qualifier
@@ -39,75 +40,87 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
         server = ServerEntry(address, qualifier)
 
         self.namingServer.lock.acquire()
-        # check  if the name is already registered with that server
         for entry in self.namingServer.services:
+            # check if the service name is already registered
             if entry.service_name == name:
                 # service already registered
+                # check if the server is already registered
                 if qualifier in entry.server_entries:
-                    print(f"Warning: server {name} @ {address} not found!")
+                    # server found -> return error (server already registered)
+                    print(f"Server {name} @ {address} already registered!")
                     context.set_code(StatusCode.ALREADY_EXISTS)
                     context.set_details("Not possible to register the server")
                     self.namingServer.lock.release()
                     return
                 else:
+                    # server not found -> add server
                     entry.server_entries.append(server)
                     self.namingServer.lock.release()
                     return pb2.RegisterResponse()
 
         # no service found -> create new service
         service = ServiceEntry(name, [server])
+        print(f"Server {name} @ {address} registered!")
         self.namingServer.services.append(service)
         self.namingServer.lock.release()
         return pb2.RegisterResponse()
 
     def lookup(self, request, context):
-        print(request)  # received request
+        debug(request)  # received request
 
         name = request.name
         qualifier = request.qualifier
         result = []
-        # check if the name is registered
+
         for entry in self.namingServer.services:
+            # check if the service name is already registered
             if entry.service_name == name:
                 # service found
                 for server in entry.server_entries:
-                    # qualifier found
+                    # check if the qualifier is already registered
                     if server.qualifier == qualifier:
+                        # qualifier found -> return the address
                         result.append(server.address)
 
+                # if there are results, return them
                 if len(result) > 0:
+                    for r in result:
+                        print(f"Qualifier {qualifier} found for server {name} @ {r}")
                     return pb2.LookupResponse(result=result)
+
+                # if there are no qualifiers, return all addresses
                 else:
-                    # qualifier not found
-                    # get all server addresses from server entries
                     server_addresses = [
                         server.address for server in entry.server_entries
                     ]
+                    print(f"Qualifier {qualifier} not found for server {name}")
                     return pb2.LookupResponse(result=server_addresses)
 
         # neither qualifier nor service found
+        print(f"Server {name} not found!")
         return pb2.LookupResponse(result=[])
 
     def delete(self, request, context):
-        print(request)  # received request
+        debug(request)  # received request
 
         name = request.name
         address = request.address
 
         self.namingServer.lock.acquire()
         for entry in self.namingServer.services:
+            # check if the service name is already registered
             if entry.service_name == name:
                 # service found
                 for server in entry.server_entries:
-                    # qualifier found
+                    # check if the address is already registered
                     if server.address == address:
+                        # address found -> remove the server
                         entry.server_entries.remove(server)
                         print(f"Server {name} @ {address} deleted!")
                         self.namingServer.lock.release()
                         return pb2.DeleteResponse()
 
-        # neither qualifier nor service found
-
+        # neither service nor address found
         print(f"Server {name} @ {address} not found!")
         context.set_code(StatusCode.NOT_FOUND)
         context.set_details("Not possible to remove the server")
