@@ -60,6 +60,8 @@
                 python-pkgs.grpcio
                 python-pkgs.grpcio-tools
               ]))
+              ruff
+              black
             ];
 
             shellHook = ''
