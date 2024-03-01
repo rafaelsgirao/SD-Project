@@ -35,12 +35,21 @@ public class ServerMain {
   /* Target Name Server */
   private static String target_ns = host_ns + ":" + port_ns;
 
+  private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
+
+  private static void debug(String message) {
+    if (DEBUG_FLAG) {
+      System.err.println("Debug: " + message);
+    }
+  }
+
   public static void main(String[] args) throws Exception {
-    System.out.println(ServerMain.class.getSimpleName());
     // Print received arguments.
-    System.out.printf("Received %d arguments%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("arg[%d] = %s%n", i, args[i]);
+    debug("Received " + args.length + " arguments");
+    if (DEBUG_FLAG) {
+      for (int i = 0; i < args.length; i++) {
+        debug(String.format("arg[%d] = %s", i, args[i]));
+      }
     }
 
     // Check arguments.
@@ -52,11 +61,10 @@ public class ServerMain {
 
     host = args[0];
     port = Integer.valueOf(args[1]);
-    qualifier = args[2];    // not used for phase 1
+    qualifier = args[2]; // not used for phase 1
     service_name = args[3];
     target = host + ":" + port;
-    
-    
+
     // Register in Naming server
     final ManagedChannel channel_ns =
         ManagedChannelBuilder.forTarget(target_ns).usePlaintext().build();
@@ -67,7 +75,7 @@ public class ServerMain {
     RegisterRequest request =
         RegisterRequest.newBuilder()
             .setName(service_name)
-            .setQualifier("A")      // qualifier not used for phase 1
+            .setQualifier("A") // qualifier not used for phase 1
             .setAddress(target)
             .build();
 
@@ -87,12 +95,12 @@ public class ServerMain {
         .addShutdownHook(
             new Thread(
                 () -> {
-                  System.out.println("Shutting down server...");
+                  debug("Shutting down server...");
                   try {
                     server.shutdown().awaitTermination();
                     System.out.println("Server shutdown complete.");
 
-                    System.out.println("Unregistering server...");
+                    debug("Unregistering server...");
                     DeleteRequest delete_request =
                         DeleteRequest.newBuilder().setName(service_name).setAddress(target).build();
                     try {
@@ -100,7 +108,7 @@ public class ServerMain {
                     } catch (StatusRuntimeException e) {
                       System.out.println(e.getMessage());
                     }
-                    System.out.println("Server unregistered successfully.");
+                    debug("Server unregistered successfully.");
                   } catch (Exception e) {
                     System.out.println("Error during shutdown: " + e.getMessage());
                   }

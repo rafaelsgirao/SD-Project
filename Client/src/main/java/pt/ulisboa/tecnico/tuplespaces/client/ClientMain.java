@@ -11,27 +11,27 @@ import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 public class ClientMain {
 
   // Debug
-  private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+  private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
   private static void debug(String message) {
     if (DEBUG_FLAG) {
-      System.out.println("Debug: " + message);
+      System.err.println("Debug: " + message);
     }
   }
 
   public static void main(String[] args) {
 
     // receive and print arguments
-    debug("Received" + args.length + "arguments");
+    debug("Received " + args.length + " arguments");
     if (DEBUG_FLAG) {
       for (int i = 0; i < args.length; i++) {
-        System.out.printf("arg[%d] = %s%n", i, args[i]);
+        debug(String.format("arg[%d] = %s", i, args[i]));
       }
     }
 
-		final String host = "localhost";
+    final String host = "localhost";
     final int port = 5001;
-    
+
     final String target = host + ":" + port;
     debug("Target: " + target);
 
@@ -58,12 +58,11 @@ public class ClientMain {
       CommandProcessor parser = new CommandProcessor(clientService);
       try {
         parser.parseInput();
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
         System.err.println("Program interrupted. Quitting.");
         System.exit(1);
       }
-			
+
       clientService.shutdown();
     } else {
       debug("No server provides such service.");
