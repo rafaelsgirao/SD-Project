@@ -65,6 +65,7 @@ public class TSServiceImpl extends TupleSpacesGrpc.TupleSpacesImplBase {
       debug("Invalid search pattern.");
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
+      return;
     }
     String tuple = state.take(pattern);
     System.out.println("Tuple taken: " + tuple);
