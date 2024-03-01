@@ -150,7 +150,7 @@ public class CommandProcessor {
       this.printUsage();
       return;
     }
-    
+
     Thread.sleep(time * 1000); // may throw InterruptedException
   }
 
@@ -191,7 +191,6 @@ public class CommandProcessor {
         || !input[1].substring(0, 1).equals(BGN_TUPLE)
         || !input[1].endsWith(END_TUPLE)
         || input.length > 2) {
-      this.printUsage();
       return false;
     } else {
       return true;
