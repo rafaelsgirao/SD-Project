@@ -29,15 +29,9 @@ public class ClientMain {
       }
     }
 
-    // check arguments
-    if (args.length != 2) { // it was 3 args!!!!!
-      System.err.println("Argument(s) missing!");
-      System.err.println("Usage: mvn exec:java -Dexec.args='<host> <port>'");
-      return;
-    }
-    final String host = "localhost";
+		final String host = "localhost";
     final int port = 5001;
-
+    
     final String target = host + ":" + port;
     debug("Target: " + target);
 
@@ -53,7 +47,7 @@ public class ClientMain {
     LookupResponse response_ns = NSstub.lookup(request_ns);
     debug(response_ns.getResultList().toString());
 
-    if (response_ns.getResultList().isEmpty()) {
+    if (!response_ns.getResultList().isEmpty()) {
 
       // Channel is the abstraction to connect to a service endpoint
       // Let us use plaintext communication because we do not have certificates

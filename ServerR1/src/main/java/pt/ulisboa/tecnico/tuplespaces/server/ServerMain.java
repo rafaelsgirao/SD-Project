@@ -11,6 +11,9 @@ import pt.tecnico.grpc.NameServerServiceGrpc;
 
 public class ServerMain {
 
+  /** Server host. */
+  private static String host;
+
   /** Server host port. */
   private static int port;
 
@@ -23,9 +26,17 @@ public class ServerMain {
   /** Server target. */
   private static String target;
 
+  /** Name Server Host */
+  private static String host_ns = "localhost";
+
+  /** Name Server Port */
+  private static int port_ns = 5001;
+
+  /* Target Name Server */
+  private static String target_ns = host_ns + ":" + port_ns;
+
   public static void main(String[] args) throws Exception {
     System.out.println(ServerMain.class.getSimpleName());
-
     // Print received arguments.
     System.out.printf("Received %d arguments%n", args.length);
     for (int i = 0; i < args.length; i++) {
@@ -33,21 +44,22 @@ public class ServerMain {
     }
 
     // Check arguments.
-    if (args.length < 3) {
+    if (args.length < 4) {
       System.err.println("Argument(s) missing!");
       System.err.printf("Usage: java %s port%n", Server.class.getName());
       return;
     }
 
+    host = args[0];
     port = Integer.valueOf(args[1]);
-    qualifier = args[2];
+    qualifier = args[2];    // not used for phase 1
     service_name = args[3];
-    final BindableService impl = new TSServiceImpl();
-    target = "localhost:" + port;
-
+    target = host + ":" + port;
+    
+    
     // Register in Naming server
     final ManagedChannel channel_ns =
-        ManagedChannelBuilder.forTarget("localhost:" + 5001).usePlaintext().build();
+        ManagedChannelBuilder.forTarget(target_ns).usePlaintext().build();
     NameServerServiceGrpc.NameServerServiceBlockingStub stub =
         NameServerServiceGrpc.newBlockingStub(channel_ns);
 
@@ -55,7 +67,7 @@ public class ServerMain {
     RegisterRequest request =
         RegisterRequest.newBuilder()
             .setName(service_name)
-            .setQualifier(qualifier)
+            .setQualifier("A")      // qualifier not used for phase 1
             .setAddress(target)
             .build();
 
@@ -67,6 +79,7 @@ public class ServerMain {
     }
 
     // Create a new server to listen on port.
+    final BindableService impl = new TSServiceImpl();
     Server server = ServerBuilder.forPort(port).addService(impl).build();
 
     // Add shutdown hook
