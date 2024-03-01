@@ -46,13 +46,13 @@ public class ClientMain {
 
     // Connect to Name Server
     final ManagedChannel channel_ns =
-        ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+        ManagedChannelBuilder.forTarget(NAMESERVER_TARGET).usePlaintext().build();
     NameServerServiceGrpc.NameServerServiceBlockingStub NSstub =
         NameServerServiceGrpc.newBlockingStub(channel_ns);
 
     // Lookup server
     LookupRequest request_ns =
-        LookupRequest.newBuilder().setName("TupleSpaces").setQualifier("A").build();
+        LookupRequest.newBuilder().setName(SERVICE_NAME).setQualifier(QUALIFIER).build();
     LookupResponse response_ns = NSstub.lookup(request_ns);
     debug(response_ns.getResultList().toString());
 
@@ -61,14 +61,14 @@ public class ClientMain {
       // Channel is the abstraction to connect to a service endpoint
       // Let us use plaintext communication because we do not have certificates
       final String target_ts = response_ns.getResultList().get(0);
-      debug("Client started, connecting to " + target_ts);
+      debug("Client started, connecting to Server " + target_ts);
 
       ClientService clientService = new ClientService(target_ts);
       CommandProcessor parser = new CommandProcessor(clientService);
       try {
         parser.parseInput();
       } catch (InterruptedException e) {
-        System.err.println("Program interrupted. Quitting.");
+        System.err.println("Program has been interrupted. Exiting...");
         System.exit(1);
       }
 
@@ -76,7 +76,7 @@ public class ClientMain {
     } else {
       debug("No server provides such service.");
     }
-    // A Channel should be shutdown before stopping the process.
+    // A channel should be shutdown before stopping the process.
     channel_ns.shutdownNow();
   }
 }

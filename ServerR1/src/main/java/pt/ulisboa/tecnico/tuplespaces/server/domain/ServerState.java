@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.tuplespaces.server.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ServerState {
@@ -8,7 +9,7 @@ public class ServerState {
   private List<String> tuples;
 
   public ServerState() {
-    this.tuples = new ArrayList<String>();
+    this.tuples = Collections.synchronizedList(new ArrayList<String>());
   }
 
   public synchronized void put(String tuple) {
@@ -46,6 +47,9 @@ public class ServerState {
   }
 
   public List<String> getTupleSpacesState() {
-    return this.tuples;
+    // Returns a read-only copy of tuples list,
+    // ensuring tuples don't escape synchronization
+    // (reinforced by using a synchronizedList wrapper)
+    return Collections.unmodifiableList(this.tuples);
   }
 }

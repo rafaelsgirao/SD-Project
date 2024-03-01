@@ -32,18 +32,15 @@ public class ClientService {
     }
   }
 
-  
-
   public ClientService(String target) {
     this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
     this.stub = TupleSpacesGrpc.newBlockingStub(channel);
-    debug("Client started, connecting to " + target);
   }
 
   public void shutdown() {
     channel.shutdownNow();
   }
-  
+
   public String put(String tuple) {
     PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
     PutResponse response = stub.put(request);
