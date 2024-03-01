@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.tuplespaces.client;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Server;
+import java.util.Arrays;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
@@ -10,7 +12,13 @@ import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 
 public class ClientMain {
 
-  // Debug
+  // Nameserver's host and port
+  private static final String NAMESERVER_TARGET = "localhost:5001";
+  // Server's qualifier
+  private static final String QUALIFIER = "A";
+  // Server's Service name
+  private static final String SERVICE_NAME = "TupleSpaces";
+  // Debug flag
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
   private static void debug(String message) {
@@ -29,11 +37,12 @@ public class ClientMain {
       }
     }
 
-    final String host = "localhost";
-    final int port = 5001;
-
-    final String target = host + ":" + port;
-    debug("Target: " + target);
+    if (args.length != 0) {
+      System.err.println("Incorrect arguments!");
+      System.err.printf("Usage: java %s %n", Server.class.getName());
+      debug(Arrays.toString(args));
+      System.exit(1);
+    }
 
     // Connect to Name Server
     final ManagedChannel channel_ns =
