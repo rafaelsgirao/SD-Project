@@ -61,7 +61,7 @@ mvn exec:exec
 Then, go to the `NameServer` directory and run the following command:
 
 ```s
-python3 server.py <port=5001>
+python3 server.py
 ```
 
 Then, go to the `ServerR1` directory and run the following command:
@@ -81,7 +81,7 @@ mvn compile exec:java
 To debug the `NameServer`, run the following command:
 
 ```s
-python3 server.py <port=5001> -debug
+python3 server.py -debug
 ```
 
 To debug the `Client` and `ServerR1`, run the following command:
