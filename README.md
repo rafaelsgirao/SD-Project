@@ -50,6 +50,46 @@ To compile and install all modules:
 mvn clean install
 ```
 
+### Execution
+
+Go to the `Contract` directory and run the following command:
+
+```s
+mvn exec:exec
+```
+
+Then, go to the `NameServer` directory and run the following command:
+
+```s
+python3 server.py <port=5001>
+```
+
+Then, go to the `ServerR1` directory and run the following command:
+
+```s
+mvn compile exec:java
+```
+
+Then, go to the `Client` directory and run the following command:
+
+```s
+mvn compile exec:java
+```
+
+## Debugging
+
+To debug the `NameServer`, run the following command:
+
+```s
+python3 server.py <port=5001> -debug
+```
+
+To debug the `Client` and `ServerR1`, run the following command:
+
+```s
+mvn compile exec:java -Ddebug
+```
+
 ## Built With
 
 - [Maven](https://maven.apache.org/) - Build and dependency management tool;
