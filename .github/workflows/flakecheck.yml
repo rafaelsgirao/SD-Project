@@ -11,7 +11,7 @@ jobs:
         uses: cachix/install-nix-action@v18
       - uses: DeterminateSystems/magic-nix-cache-action@main
         name: "Magic Nix Cache!"
-      - run: nix flake check --extra-experimental-features "nix-command flakes"
+      - run: nix flake check --quiet --extra-experimental-features "nix-command flakes"
         name: Run nix flake checks
       - name: Cache local Maven repository
         uses: actions/cache@v3
@@ -21,4 +21,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Verify with Maven
-        run: mvn --batch-mode --update-snapshots -Dstyle.color=always verify
+        run: mvn --no-transfer-progress --quiet --batch-mode --update-snapshots -Dstyle.color=always verify
