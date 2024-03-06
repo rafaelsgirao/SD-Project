@@ -21,4 +21,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Verify with Maven
-        run: mvn --no-transfer-progress --quiet --batch-mode --update-snapshots -Dstyle.color=always verify
+        run: mvn --no-transfer-progress --batch-mode --update-snapshots -Dstyle.color=always verify
