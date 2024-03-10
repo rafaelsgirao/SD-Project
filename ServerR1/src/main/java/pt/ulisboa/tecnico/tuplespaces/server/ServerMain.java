@@ -58,8 +58,8 @@ public class ServerMain {
 
     host = "localhost";
     port = Integer.valueOf(args[0]);
-    // qualifier = args[1]; // not used for phase 1
-    qualifier = "A";
+    qualifier = args[1]; // not used for phase 1
+
     service_name = "TupleSpaces";
     target = host + ":" + port;
 

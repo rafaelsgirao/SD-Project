@@ -47,7 +47,9 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                 # check if the server is already registered
                 if qualifier in entry.server_entries:
                     # server found -> return error (server already registered)
-                    print(f"Server {name} @ {address} already registered!")
+                    print(
+                        f"Server {name} @ {address}, qualifier {qualifier} already registered!"
+                    )
                     context.set_code(StatusCode.ALREADY_EXISTS)
                     context.set_details("Not possible to register the server")
                     self.namingServer.lock.release()
@@ -55,12 +57,16 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                 else:
                     # server not found -> add server
                     entry.server_entries.append(server)
+                    print(
+                        f"Server {name} @ {address}, qualifier {qualifier} registered!"
+                    )
+
                     self.namingServer.lock.release()
                     return pb2.RegisterResponse()
 
         # no service found -> create new service
         service = ServiceEntry(name, [server])
-        print(f"Server {name} @ {address} registered!")
+        print(f"Server {name} @ {address}, qualifier {qualifier} registered!")
         self.namingServer.services.append(service)
         self.namingServer.lock.release()
         return pb2.RegisterResponse()
@@ -102,7 +108,7 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                     return pb2.LookupResponse(result=server_addresses)
 
         # neither qualifier nor service found
-        print(f"Server {name} not found!")
+        print(f"Server {name}, qualifier {qualifier} not found!")
 
         self.namingServer.lock.release()
         return pb2.LookupResponse(result=[])
@@ -123,7 +129,9 @@ class NamingServerServiceImpl(pb2_grpc.NameServerServiceServicer):
                     if server.address == address:
                         # address found -> remove the server
                         entry.server_entries.remove(server)
-                        print(f"Server {name} @ {address} deleted!")
+                        print(
+                            f"Server {name} @ {address}, qualifier {server.qualifier} deleted!"
+                        )
                         self.namingServer.lock.release()
                         return pb2.DeleteResponse()
 

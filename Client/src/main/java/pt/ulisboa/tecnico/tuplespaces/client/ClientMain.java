@@ -1,23 +1,13 @@
 package pt.ulisboa.tecnico.tuplespaces.client;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import java.util.Arrays;
-import pt.tecnico.grpc.NameServer.LookupRequest;
-import pt.tecnico.grpc.NameServer.LookupResponse;
-import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 
 public class ClientMain {
 
-  // Nameserver's host and port
-  private static final String NAMESERVER_TARGET = "localhost:5001";
-  // Server's qualifier
-  private static final String QUALIFIER = "A";
-  // Server's Service name
-  private static final String SERVICE_NAME = "TupleSpaces";
+  static final int numServers = 3; // Servers A, B and C
   // ----------- DEBUG ----------------
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
 
@@ -46,39 +36,15 @@ public class ClientMain {
       System.exit(1);
     }
 
-    // Connect to Name Server
-    final ManagedChannel channel_ns =
-        ManagedChannelBuilder.forTarget(NAMESERVER_TARGET).usePlaintext().build();
-    NameServerServiceGrpc.NameServerServiceBlockingStub NSstub =
-        NameServerServiceGrpc.newBlockingStub(channel_ns);
-
-    // Lookup server
-    LookupRequest request_ns =
-        LookupRequest.newBuilder().setName(SERVICE_NAME).setQualifier(QUALIFIER).build();
-    LookupResponse response_ns = NSstub.lookup(request_ns);
-    debug(response_ns.getResultList().toString());
-
-    if (!response_ns.getResultList().isEmpty()) {
-
-      // Channel is the abstraction to connect to a service endpoint
-      // Let us use plaintext communication because we do not have certificates
-      final String target_ts = response_ns.getResultList().get(0);
-      debug("Client started, connecting to Server " + target_ts);
-
-      ClientService clientService = new ClientService(target_ts);
-      CommandProcessor parser = new CommandProcessor(clientService);
-      try {
-        parser.parseInput();
-      } catch (InterruptedException e) {
-        System.err.println("Program has been interrupted. Exiting...");
-        System.exit(1);
-      }
-
-      clientService.shutdown();
-    } else {
-      debug("No server provides such service.");
+    ClientService clientService = new ClientService(numServers);
+    CommandProcessor parser = new CommandProcessor(clientService);
+    try {
+      parser.parseInput();
+    } catch (InterruptedException e) {
+      System.err.println("Program has been interrupted. Exiting...");
+      System.exit(1);
     }
-    // A channel should be shutdown before stopping the process.
-    channel_ns.shutdownNow();
+
+    clientService.shutdown();
   }
 }
