@@ -45,6 +45,13 @@
           let
             mavenPkg = pkgs.maven;
             javaPkg = pkgs.temurin-bin-17;
+            patchelf = "${pkgs.patchelf}/bin/patchelf";
+            patchProtoc = pkgs.writeShellScriptBin "patch-Protoc" ''
+              # ${patchelf} --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" target/protoc-plugins/protoc-3.12.0-linux-x86_64.exe
+              # mvn install
+              ${patchelf} --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" target/protoc-plugins/protoc-gen-grpc-java-1.36.0-linux-x86_64.exe
+              mvn install
+            '';
           in
           pkgs.mkShell {
             #Add executable packages to the nix-shell environment.
@@ -55,7 +62,12 @@
               mavenPkg
               git
 
+              #Utils
+              patchProtoc
+              commitizen
 
+              grpc-tools
+              protobuf
               (pkgs.python3.withPackages (python-pkgs: [
                 python-pkgs.grpcio
                 python-pkgs.grpcio-tools
