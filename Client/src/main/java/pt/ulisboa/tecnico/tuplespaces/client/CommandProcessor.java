@@ -102,7 +102,7 @@ public class CommandProcessor {
     }
   }
 
-  private void read(String[] split) {
+  private void read(String[] split) throws InterruptedException {
     // check if input is valid
     if (!this.inputIsValid(split)) {
       this.printUsage();

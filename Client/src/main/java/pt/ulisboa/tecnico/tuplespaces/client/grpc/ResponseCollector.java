@@ -9,21 +9,18 @@ public class ResponseCollector {
     this.collectedResponses = new ArrayList<>();
   }
 
-  public synchronized void addString(String response) {
+  public synchronized void addResponse(String response) {
     this.collectedResponses.add(response);
     notifyAll();
   }
 
-  public synchronized String getStrings() {
-    String res = new String();
-    for (String s : this.collectedResponses) {
-      res = res.concat(s);
-    }
-    return res;
+  public synchronized ArrayList<String> getResponses() {
+    return this.collectedResponses;
   }
 
-  public synchronized void waitUntilAllReceived(int n) throws InterruptedException {
+  public synchronized void waitUntilNReceived(int n) throws InterruptedException {
     while (this.collectedResponses.size() < n) {
+      System.err.println("DEBUG: Waiting for response!");
       wait();
     }
   }

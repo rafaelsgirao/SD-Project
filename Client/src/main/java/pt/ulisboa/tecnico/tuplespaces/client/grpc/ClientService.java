@@ -8,6 +8,7 @@ import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 
 /*
@@ -118,8 +119,22 @@ public class ClientService {
     //   return response.toString();
   }
 
-  public String read(String pattern) throws StatusRuntimeException {
-    return "FIXME Xu-Liskov";
+  public String read(String pattern) throws StatusRuntimeException, InterruptedException {
+
+    ResponseCollector c = new ResponseCollector();
+
+    ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
+
+    for (Integer id : delayer) {
+      stubs[id].read(request, new ResponseObserver(c));
+    }
+
+    // wait for the first response
+    c.waitUntilNReceived(1);
+
+    String response = c.getResponses().get(0);
+    return response;
+    //  return "FIXME Xu-Liskov";
     //  ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
     // ReadResponse response = stub.read(request);
     // return response.getResult();
