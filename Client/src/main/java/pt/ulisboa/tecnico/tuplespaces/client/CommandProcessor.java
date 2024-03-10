@@ -82,7 +82,7 @@ public class CommandProcessor {
     System.err.println("ERR: " + e.getStatus().getDescription());
   }
 
-  private void put(String[] split) {
+  private void put(String[] split) throws InterruptedException {
 
     // check if input is valid
     if (!this.inputIsValid(split)) {

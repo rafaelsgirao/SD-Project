@@ -8,6 +8,7 @@ import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
+import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
 import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 
@@ -38,6 +39,8 @@ public class ClientService {
   ManagedChannel[] channels;
   TupleSpacesGrpc.TupleSpacesStub[] stubs;
 
+  private Integer numServers;
+
   private static void debug(String message) {
     if (DEBUG_FLAG) {
       System.out.println("Debug: " + message);
@@ -63,7 +66,7 @@ public class ClientService {
   (according to the Xu-Liskov algorithm)*/
 
   public ClientService(int numServers) {
-
+    this.numServers = numServers;
     /* TODO: create channel/stub for each server */
     // this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build(); TODO: remove
     // this.stub = TupleSpacesGrpc.newBlockingStub(channel);
@@ -112,8 +115,21 @@ public class ClientService {
     }
   }
 
-  public String put(String tuple) throws StatusRuntimeException {
-    return "TODO";
+  public String put(String tuple) throws StatusRuntimeException, InterruptedException {
+
+    ResponseCollector c = new ResponseCollector();
+
+    PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
+
+    for (Integer id : delayer) {
+      stubs[id].put(request, new ResponseObserver(c));
+    }
+
+    c.waitUntilNReceived(numServers);
+
+    String response = c.getResponses().get(0);
+
+    return response;
     //  PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
     //   PutResponse response = stub.put(request);
     //   return response.toString();
@@ -134,10 +150,6 @@ public class ClientService {
 
     String response = c.getResponses().get(0);
     return response;
-    //  return "FIXME Xu-Liskov";
-    //  ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
-    // ReadResponse response = stub.read(request);
-    // return response.getResult();
   }
 
   public List<String> getTupleSpacesState() {
