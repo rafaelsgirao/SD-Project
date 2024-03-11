@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ServerState {
 
-  private List<String> tuples;
+  private List<Tuple> tuples;
 
   public class Tuple {
     private boolean lock;
@@ -58,18 +58,19 @@ public class ServerState {
   }
 
   public ServerState() {
-    this.tuples = Collections.synchronizedList(new ArrayList<String>());
+    this.tuples = Collections.synchronizedList(new ArrayList<Tuple>());
   }
 
-  public synchronized void put(String tuple) {
+  public synchronized void put(String tupleString) {
+    Tuple tuple = new Tuple(tupleString);
     tuples.add(tuple);
     notifyAll();
   }
 
   private String getMatchingTuple(String pattern) {
-    for (String tuple : this.tuples) {
-      if (tuple.matches(pattern)) {
-        return tuple;
+    for (Tuple tuple : this.tuples) {
+      if (tuple.getTuple().matches(pattern)) {
+        return tuple.getTuple();
       }
     }
     return null;
@@ -87,6 +88,7 @@ public class ServerState {
     return tuple;
   }
 
+  /*
   public synchronized String take(String pattern) {
     String tuple = read(pattern);
     if (tuple != null) {
@@ -94,11 +96,13 @@ public class ServerState {
     }
     return tuple;
   }
+  */
 
   public List<String> getTupleSpacesState() {
-    // Returns a read-only copy of tuples list,
-    // ensuring tuples don't escape synchronization
-    // (reinforced by using a synchronizedList wrapper)
-    return Collections.unmodifiableList(this.tuples);
+    List<String> result = Collections.emptyList();
+    for (Tuple tuple : this.tuples) {
+      result.add(tuple.getTuple());
+    }
+    return result;
   }
 }
