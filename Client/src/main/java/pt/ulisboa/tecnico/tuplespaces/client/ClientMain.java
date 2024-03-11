@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.tuplespaces.client;
 
 import io.grpc.Server;
 import java.util.Arrays;
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
 import pt.ulisboa.tecnico.tuplespaces.client.grpc.ClientService;
 
 public class ClientMain {

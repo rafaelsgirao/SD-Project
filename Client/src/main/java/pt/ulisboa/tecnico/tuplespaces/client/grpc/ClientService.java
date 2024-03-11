@@ -7,10 +7,10 @@ import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.*;
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.PutRequest;
-import pt.ulisboa.tecnico.tuplespaces.centralized.contract.TupleSpacesCentralized.ReadRequest;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.*;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.PutRequest;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadRequest;
 
 /*
  * The gRPC client-side logic should be here.
@@ -37,7 +37,7 @@ public class ClientService {
 
   // List of channels and stubs.
   ManagedChannel[] channels;
-  TupleSpacesGrpc.TupleSpacesStub[] stubs;
+  TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[] stubs;
 
   private Integer numServers;
 
@@ -69,15 +69,15 @@ public class ClientService {
     this.numServers = numServers;
     /* TODO: create channel/stub for each server */
     // this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build(); TODO: remove
-    // this.stub = TupleSpacesGrpc.newBlockingStub(channel);
+    // this.stub = TupleSpacesReplicaGrpc.newBlockingStub(channel);
     channels = new ManagedChannel[numServers];
-    stubs = new TupleSpacesGrpc.TupleSpacesStub[numServers];
+    stubs = new TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[numServers];
 
     for (int i = 0; i < numServers; i++) {
       // TODO: verify if each qualifier lookup request has only one server (?)
       String server = getServersFromNameserver(QUALIFIERS.get(i)).get(0);
       channels[i] = ManagedChannelBuilder.forTarget(server).usePlaintext().build();
-      stubs[i] = TupleSpacesGrpc.newStub(channels[i]);
+      stubs[i] = TupleSpacesReplicaGrpc.newStub(channels[i]);
     }
 
     /* The delayer can be used to inject delays to the sending of requests to the
