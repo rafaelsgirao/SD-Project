@@ -99,7 +99,7 @@ public class ServerState {
   */
 
   public List<String> getTupleSpacesState() {
-    List<String> result = Collections.emptyList();
+    List<String> result = new ArrayList<String>();
     for (Tuple tuple : this.tuples) {
       result.add(tuple.getTuple());
     }

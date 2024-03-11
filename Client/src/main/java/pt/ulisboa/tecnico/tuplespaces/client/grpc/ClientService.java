@@ -8,9 +8,10 @@ import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.*;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.PutRequest;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadRequest;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.getTupleSpacesStateRequest;
 
 /*
  * The gRPC client-side logic should be here.
@@ -152,11 +153,17 @@ public class ClientService {
     return response;
   }
 
-  public List<String> getTupleSpacesState() {
-    return List.of("FIXME Xu-Liskov");
-    // getTupleSpacesStateRequest request = getTupleSpacesStateRequest.getDefaultInstance();
-    // getTupleSpacesStateResponse response = stubs.getTupleSpacesState(request);
-    // return response.getTupleList();
+  public List<String> getTupleSpacesState(int serverId)
+      throws StatusRuntimeException, InterruptedException {
+
+    ResponseCollector c = new ResponseCollector();
+    getTupleSpacesStateRequest request = getTupleSpacesStateRequest.getDefaultInstance();
+
+    stubs[serverId].getTupleSpacesState(request, new ResponseObserver(c));
+
+    c.waitUntilNReceived(1);
+
+    return c.getResponses();
   }
 
   public String take(String pattern) throws StatusRuntimeException {

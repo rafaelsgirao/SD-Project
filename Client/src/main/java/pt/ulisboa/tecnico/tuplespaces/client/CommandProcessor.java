@@ -141,15 +141,19 @@ public class CommandProcessor {
     }
   }
 
-  private void getTupleSpacesState(String[] split) {
+  private void getTupleSpacesState(String[] split) throws InterruptedException {
 
     if (split.length != 2) {
       this.printUsage();
       return;
     }
 
+    String qualifier = split[1];
+
+    // TODO: check if this is  -1
+    int serverId = indexOfServerQualifier(qualifier);
     // get the tuple spaces state
-    String result = clientService.getTupleSpacesState().toString();
+    String result = clientService.getTupleSpacesState(serverId).toString();
     showResult(result);
   }
 
