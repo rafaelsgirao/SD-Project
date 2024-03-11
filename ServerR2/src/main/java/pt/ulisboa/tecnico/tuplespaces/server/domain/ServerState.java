@@ -8,6 +8,55 @@ public class ServerState {
 
   private List<String> tuples;
 
+  public class Tuple {
+    private boolean lock;
+    private String client;
+    private String tuple;
+
+    public Tuple(String tuple) {
+      this.client = "";
+      this.tuple = tuple;
+      this.lock = false;
+    }
+
+    public String getClient() {
+      return client;
+    }
+
+    public String getTuple() {
+      return tuple;
+    }
+
+    public synchronized boolean isLocked() {
+      return lock;
+    }
+
+    private synchronized void lock() {
+      this.lock = true;
+    }
+
+    private synchronized void unlock() {
+      this.lock = false;
+    }
+
+    public synchronized boolean acquireLock(String client) {
+      if (!isLocked()) {
+        this.lock();
+        this.client = client;
+        return true;
+      }
+      return false;
+    }
+
+    public synchronized void releaseLock() {
+      if (isLocked()) {
+        this.unlock();
+        this.client = "";
+        return;
+      }
+    }
+  }
+
   public ServerState() {
     this.tuples = Collections.synchronizedList(new ArrayList<String>());
   }
