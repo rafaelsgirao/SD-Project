@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import java.lang.System.Logger;
 import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
@@ -11,6 +12,7 @@ import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.PutRequest;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadRequest;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Request;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.getTupleSpacesStateRequest;
 
 /*
@@ -20,8 +22,9 @@ import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplic
  */
 public class ClientService {
 
+  private static final Logger logger = System.getLogger(ResponseCollector.class.getName());
+
   OrderedDelayer delayer;
-  private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
   // Nameserver.
   private ManagedChannel channelNS;
@@ -42,12 +45,6 @@ public class ClientService {
 
   private Integer numServers;
 
-  private static void debug(String message) {
-    if (DEBUG_FLAG) {
-      System.out.println("Debug: " + message);
-    }
-  }
-
   public List<String> getServersFromNameserver(String qualifier) {
 
     // Connect to Name Server
@@ -60,7 +57,6 @@ public class ClientService {
     LookupResponse response_ns = stubNS.lookup(request_ns);
 
     return response_ns.getResultList();
-    // debug(response_ns.getResultList().toString());
   }
 
   /* TODO: This class should implement the front-end of the replicated TupleSpaces service
@@ -166,10 +162,26 @@ public class ClientService {
     return c.getResponses();
   }
 
-  public String take(String pattern) throws StatusRuntimeException {
-    return "FIXME Xu-Liskov";
-    // TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
-    // TakeResponse response = stub.take(request);
-    // return response.getResult();
+  public String take(String pattern) throws StatusRuntimeException, InterruptedException {
+    // Phase 1
+
+    ResponseCollector c = new ResponseCollector();
+    // FIXME: GENERATE A RANDOM CLIENT ID!!!!
+    TakePhase1Request request =
+        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(99309).build();
+
+    for (Integer id : delayer) {
+      stubs[id].takePhase1(request, new ResponseObserver(c));
+    }
+
+    c.waitUntilNReceived(numServers);
+    return c.getResponses().toString();
+
+    /*TODO: complete this:
+      - generate random client id (should it be random?)
+      - make sure intersection of responses is working
+      - select a tuple from the intersection deterministically (i.e, get(0))
+      - implement phase 2
+    */
   }
 }

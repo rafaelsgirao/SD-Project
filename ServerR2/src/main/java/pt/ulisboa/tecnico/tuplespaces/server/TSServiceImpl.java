@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.tuplespaces.server;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 import io.grpc.stub.StreamObserver;
+import java.lang.System.Logger;
 import java.util.List;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
@@ -10,14 +11,7 @@ import pt.ulisboa.tecnico.tuplespaces.server.domain.ServerState;
 
 public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImplBase {
 
-  // ----------- DEBUG ----------------
-  private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
-
-  private static void debug(String message) {
-    if (DEBUG_FLAG) {
-      System.err.println("\033[1;32;40m" + "DEBUG: " + message + "\033[m");
-    }
-  }
+  private static final Logger logger = System.getLogger(TSServiceImpl.class.getName());
 
   // ---------------------------------
 
@@ -30,7 +24,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   public void put(PutRequest request, StreamObserver<PutResponse> responseObserver) {
     String newTuple = request.getNewTuple();
     if (!tupleIsValid(newTuple)) {
-      debug("Invalid tuple.");
+      logger.log(Logger.Level.DEBUG, "Invalid tuple.");
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid tuple.").asRuntimeException());
       return;
@@ -46,7 +40,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
 
     String pattern = request.getSearchPattern();
     if (!patternIsValid(pattern)) {
-      debug("Invalid search pattern.");
+      logger.log(Logger.Level.WARNING, "Invalid search pattern {0}", pattern);
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
@@ -57,13 +51,33 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
+  public void takePhase1(
+      // FIXME: validate client id is valid (i.e, not unset!)
+      TakePhase1Request request, StreamObserver<TakePhase1Response> responseObserver) {
+    String pattern = request.getSearchPattern();
+    int clientId = request.getClientId();
+    if (!patternIsValid(pattern)) {
+      logger.log(Logger.Level.WARNING, "Invalid search pattern {0}", pattern);
+      responseObserver.onError(
+          INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
+      return;
+    }
+    logger.log(
+        Logger.Level.DEBUG, "Client take phase 1: client={0}, pattern={1}", clientId, pattern);
+
+    List<String> tuples = state.takePhase1(clientId, pattern);
+    logger.log(Logger.Level.DEBUG, "Client take phase 1: matched tuples {0}", tuples);
+    responseObserver.onNext(TakePhase1Response.newBuilder().addAllReservedTuples(tuples).build());
+    responseObserver.onCompleted();
+  }
+
   /*FIXME: variante take R2
   @Override
   public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
 
     String pattern = request.getSearchPattern();
     if (!patternIsValid(pattern)) {
-      debug("Invalid search pattern.");
+      logger.log(Logger.Level.DEBUG, "Invalid search pattern.");
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
