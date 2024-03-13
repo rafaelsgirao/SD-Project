@@ -7,8 +7,7 @@ import java.util.List;
 
 public class ServerState {
 
-  private static final Logger logger =
-      System.getLogger(ServerState.class.getName());
+  private static final Logger logger = System.getLogger(ServerState.class.getName());
 
   private List<Tuple> tuples;
 
@@ -23,15 +22,25 @@ public class ServerState {
       this.lock = false;
     }
 
-    public int getClient() { return client; }
+    public int getClient() {
+      return client;
+    }
 
-    public String getTuple() { return tuple; }
+    public String getTuple() {
+      return tuple;
+    }
 
-    public synchronized boolean isLocked() { return lock; }
+    public synchronized boolean isLocked() {
+      return lock;
+    }
 
-    private synchronized void lock() { this.lock = true; }
+    private synchronized void lock() {
+      this.lock = true;
+    }
 
-    private synchronized void unlock() { this.lock = false; }
+    private synchronized void unlock() {
+      this.lock = false;
+    }
 
     public synchronized boolean acquireLock(int client) {
       if (!isLocked()) {
@@ -115,10 +124,9 @@ public class ServerState {
       }
       resultTuples.add(tuple.getTuple());
     }
-    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern",
-               matchingTuples.size());
-    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples locked successfully",
-               resultTuples.size());
+    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern", matchingTuples.size());
+    logger.log(
+        Logger.Level.DEBUG, "takePhase1: {0} tuples locked successfully", resultTuples.size());
 
     return resultTuples;
   }
