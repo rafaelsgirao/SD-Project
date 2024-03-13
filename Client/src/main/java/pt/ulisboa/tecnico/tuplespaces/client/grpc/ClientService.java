@@ -24,6 +24,8 @@ public class ClientService {
 
   OrderedDelayer delayer;
 
+  private static int clientId;
+
   // Nameserver.
   private ManagedChannel channelNS;
   NameServerServiceGrpc.NameServerServiceBlockingStub stubNS;
@@ -42,6 +44,10 @@ public class ClientService {
   TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[] stubs;
 
   private Integer numServers;
+
+  private int randomClientId() {
+    return (int) (Math.random() * 1000000);
+  }
 
   public List<String> getServersFromNameserver(String qualifier) {
 
@@ -67,6 +73,8 @@ public class ClientService {
     // this.stub = TupleSpacesReplicaGrpc.newBlockingStub(channel);
     channels = new ManagedChannel[numServers];
     stubs = new TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[numServers];
+
+    this.clientId = randomClientId();
 
     for (int i = 0; i < numServers; i++) {
       // TODO: verify if each qualifier lookup request has only one server (?)
@@ -160,14 +168,13 @@ public class ClientService {
     return c.getResponses();
   }
 
-  public String take(String pattern, int clientId)
-      throws StatusRuntimeException, InterruptedException {
+  public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
 
     ResponseCollector c = new ResponseCollector();
-    // FIXME: GENERATE A RANDOM CLIENT ID!!!!
+
     TakePhase1Request phase1_request =
-        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(clientId).build();
+        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(this.clientId).build();
 
     for (Integer id : delayer) {
       stubs[id].takePhase1(phase1_request, new ResponseObserver(c));
@@ -190,23 +197,17 @@ public class ClientService {
     // Take the first tuple from intersection.
     String ourTuple = phase1_result.get(0);
     TakePhase2Request phase2_request =
-        TakePhase2Request.newBuilder().setClientId(clientId).setTuple(ourTuple).build();
+        TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
       // FIXME: try-catch this. Server may decline if tuple isn't locked by this client
       stubs[id].takePhase2(phase2_request, new ResponseObserver(c));
     }
 
-    // Release all other tuples.
-    TakePhase1ReleaseRequest phase1_release =
-        TakePhase1ReleaseRequest.newBuilder().setClientId(clientId).build();
-    for (Integer id : delayer) {
-      stubs[id].takePhase1Release(phase1_release, new ResponseObserver(c));
-    }
-
+    // communist tuple
     return ourTuple;
 
     /*TODO: complete this:
-      - generate random client id (should it be random?)
+      - generate random client id (should it be random?) DONE
       - make sure intersection of responses is working
       - select a tuple from the intersection deterministically (i.e, get(0))
       - implement phase 2
