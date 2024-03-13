@@ -84,7 +84,8 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
 
   public void takePhase2(
       TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
-    String tuple = request.getTuple();
+    String tuple = request.getTuple().replace("\n", "");
+    System.err.println("Tuple do servidor: " + tuple);
     int clientId = request.getClientId();
     // FIXME: validar argumentos
 
@@ -92,7 +93,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       responseObserver.onError(
           Status.INVALID_ARGUMENT
               .withDescription(
-                  "takePhase2: Failed to take tuple" + tuple + "for client " + clientId)
+                  "takePhase2: Failed to take tuple " + tuple + "for client " + clientId)
               .asRuntimeException());
     }
     responseObserver.onNext(TakePhase2Response.getDefaultInstance());
