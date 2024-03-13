@@ -16,21 +16,17 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     this.collector = c;
   }
 
-  // cursed but it work
   @Override
   public void onNext(R r) {
-    switch (r.getClass().getName()) {
-      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$ReadResponse":
-        onNext((ReadResponse) r);
-        break;
-      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$TakePhase1Response":
-        onNext((TakePhase1Response) r);
-        break;
-      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$TakePhase2Response":
-        onNext((TakePhase2Response) r);
-        break;
-      default:
-        break;
+    if (r instanceof ReadResponse) {
+      onNext((ReadResponse) r);
+    } else if (r instanceof TakePhase1Response) {
+      onNext((TakePhase1Response) r);
+    } else if (r instanceof TakePhase2Response) {
+      onNext((TakePhase2Response) r);
+    } else {
+      collector.addResponse(r.toString());
+      logger.log(Logger.Level.DEBUG, "[GENERIC] Received response\n" + r);
     }
   }
 
@@ -40,7 +36,8 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   }
 
   public void onNext(TakePhase2Response r) {
-    // do me please!
+    // do something here :TODO:
+    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 2] Received response\n" + r);
   }
 
   // https://stackoverflow.com/questions/33608680/finding-the-common-elements-between-n-lists-in-java
@@ -56,6 +53,7 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     for (String tuple : r.getReservedTuplesList()) {
       collector.addResponse(tuple);
     }
+    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 1] Received response\n" + r);
   }
 
   @Override
