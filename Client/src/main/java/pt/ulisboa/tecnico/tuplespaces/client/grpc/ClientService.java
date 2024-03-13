@@ -4,16 +4,14 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.lang.System.Logger;
+import java.util.ArrayList;
 import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.PutRequest;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadRequest;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Request;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.getTupleSpacesStateRequest;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
 
 /*
  * The gRPC client-side logic should be here.
@@ -162,20 +160,50 @@ public class ClientService {
     return c.getResponses();
   }
 
-  public String take(String pattern) throws StatusRuntimeException, InterruptedException {
+  public String take(String pattern, int clientId)
+      throws StatusRuntimeException, InterruptedException {
     // Phase 1
 
     ResponseCollector c = new ResponseCollector();
     // FIXME: GENERATE A RANDOM CLIENT ID!!!!
-    TakePhase1Request request =
-        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(99309).build();
+    TakePhase1Request phase1_request =
+        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(clientId).build();
 
     for (Integer id : delayer) {
-      stubs[id].takePhase1(request, new ResponseObserver(c));
+      stubs[id].takePhase1(phase1_request, new ResponseObserver(c));
     }
 
     c.waitUntilNReceived(numServers);
-    return c.getResponses().toString();
+
+    ArrayList<String> phase1_result = c.getResponses();
+
+    if (phase1_result.size() == 0) {
+      // FIXME: Caso em que a intsc na fase 1 retorna vazio:
+      // Caso tenhamos um tuplo disponivel na maioria dos servers, repetir a fase 1.
+      // Caso contrario (nao obtivemos bloqueio da maioria dos servers) (concretamente isto é o
+      // quê??),
+      // Devemos dar back-off (pedir p/ desbloquear os tuplos todos) para deixar outro cliente
+      // tentar.
+      return "";
+    }
+
+    // Take the first tuple from intersection.
+    String ourTuple = phase1_result.get(0);
+    TakePhase2Request phase2_request =
+        TakePhase2Request.newBuilder().setClientId(clientId).setTuple(ourTuple).build();
+    for (Integer id : delayer) {
+      // FIXME: try-catch this. Server may decline if tuple isn't locked by this client
+      stubs[id].takePhase2(phase2_request, new ResponseObserver(c));
+    }
+
+    // Release all other tuples.
+    TakePhase1ReleaseRequest phase1_release =
+        TakePhase1ReleaseRequest.newBuilder().setClientId(clientId).build();
+    for (Integer id : delayer) {
+      stubs[id].takePhase1Release(phase1_release, new ResponseObserver(c));
+    }
+
+    return ourTuple;
 
     /*TODO: complete this:
       - generate random client id (should it be random?)

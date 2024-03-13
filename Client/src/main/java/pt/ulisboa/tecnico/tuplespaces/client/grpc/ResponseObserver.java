@@ -27,6 +27,7 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   }
 
   // https://stackoverflow.com/questions/33608680/finding-the-common-elements-between-n-lists-in-java
+  // This method handles the intersection of returned tuples from all servers.
   public void onNext(TakePhase1Response r) {
     if (collector.getResponses().size() != 0) {
       boolean changed = collector.retainAll(r.getReservedTuplesList());

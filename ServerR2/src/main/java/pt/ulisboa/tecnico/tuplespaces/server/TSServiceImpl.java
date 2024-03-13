@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.tuplespaces.server;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
 import java.util.List;
@@ -9,6 +10,7 @@ import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplic
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
 import pt.ulisboa.tecnico.tuplespaces.server.domain.ServerState;
 
+// FIXME: check arguments from client are correct here (not serverstate);
 public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImplBase {
 
   private static final Logger logger = System.getLogger(TSServiceImpl.class.getName());
@@ -71,23 +73,31 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
-  /*FIXME: variante take R2
-  @Override
-  public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
-
-    String pattern = request.getSearchPattern();
-    if (!patternIsValid(pattern)) {
-      logger.log(Logger.Level.DEBUG, "Invalid search pattern.");
-      responseObserver.onError(
-          INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
-      return;
-    }
-    String tuple = state.take(pattern);
-    System.out.println("Tuple taken: " + tuple);
-    responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
+  public void takePhase1Release(
+      TakePhase1ReleaseRequest request,
+      StreamObserver<TakePhase1ReleaseResponse> responseObserver) {
+    int clientId = request.getClientId();
+    state.takePhase1Release(clientId);
+    responseObserver.onNext(TakePhase1ReleaseResponse.getDefaultInstance());
     responseObserver.onCompleted();
   }
-  */
+
+  public void takePhase2(
+      TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
+    String tuple = request.getTuple();
+    int clientId = request.getClientId();
+    // FIXME: validar argumentos
+
+    if (!state.takePhase2(tuple, clientId)) {
+      responseObserver.onError(
+          Status.INVALID_ARGUMENT
+              .withDescription(
+                  "takePhase2: Failed to take tuple" + tuple + "for client " + clientId)
+              .asRuntimeException());
+    }
+    responseObserver.onNext(TakePhase2Response.getDefaultInstance());
+    responseObserver.onCompleted();
+  }
 
   @Override
   public void getTupleSpacesState(
@@ -102,6 +112,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
+  // Utils
   private boolean tupleIsValid(String input) {
     if (input.contains(" ")
         || !input.substring(0, 1).equals(BGN_TUPLE)

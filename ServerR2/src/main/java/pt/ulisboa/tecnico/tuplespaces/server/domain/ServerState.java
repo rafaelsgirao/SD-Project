@@ -108,28 +108,43 @@ public class ServerState {
 
   public synchronized List<String> takePhase1(int clientId, String pattern) {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
-    for (Tuple tuple : tuples) {
+    List<String> resultTuples = new ArrayList<String>();
+    for (Tuple tuple : matchingTuples) {
+      // According to faculty, a tuple that can't be locked shouldn't cause the whole
+      // takephase1 process to abort.
+      // FIXME: take should block until a matching tuple is found
       if (!tuple.acquireLock(clientId)) {
         logger.log(
             Logger.Level.WARNING,
-            "Failed to acquire lock on tuple {0}, client {1}",
+            "Failed to acquire lock on tuple {0} for client {1}",
             tuple.getTuple(),
             clientId);
-        for (Tuple t : tuples) {
-          t.releaseLock(clientId);
-        }
-        return null;
+      } else {
+        resultTuples.add(tuple.getTuple());
       }
     }
+    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern", matchingTuples.size());
     logger.log(
-        Logger.Level.DEBUG,
-        String.format("takePhase1: %s tuples matched pattern", matchingTuples.size()));
+        Logger.Level.DEBUG, "takePhase1: {0} tuples locked successfully", resultTuples.size());
 
-    List<String> result = new ArrayList<String>();
-    for (Tuple tuple : matchingTuples) {
-      result.add(tuple.getTuple());
+    return resultTuples;
+  }
+
+  public synchronized void takePhase1Release(int clientId) {
+    for (Tuple tuple : this.tuples) {
+      tuple.releaseLock(clientId);
     }
-    return result;
+  }
+
+  public boolean takePhase2(String tupleString, int clientId) {
+    List<Tuple> possibleTuples = getMatchingTuples(tupleString);
+    for (Tuple tuple : possibleTuples) {
+      if (tuple.getClient() == clientId) {
+        tuples.remove(tuple);
+        return true;
+      }
+    }
+    return false;
   }
 
   public List<String> getTupleSpacesState() {
