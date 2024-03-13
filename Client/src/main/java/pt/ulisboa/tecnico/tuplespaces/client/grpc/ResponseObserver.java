@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadResponse;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Response;
+import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase2Response;
 
 public class ResponseObserver<R> implements StreamObserver<R> {
 
@@ -15,15 +16,31 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     this.collector = c;
   }
 
+  // cursed but it work
   @Override
   public void onNext(R r) {
-    collector.addResponse(r.toString());
-    logger.log(Logger.Level.DEBUG, "Received response:\n" + r);
+    switch (r.getClass().getName()) {
+      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$ReadResponse":
+        onNext((ReadResponse) r);
+        break;
+      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$TakePhase1Response":
+        onNext((TakePhase1Response) r);
+        break;
+      case "pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov$TakePhase2Response":
+        onNext((TakePhase2Response) r);
+        break;
+      default:
+        break;
+    }
   }
 
   public void onNext(ReadResponse r) {
     collector.addResponse(r.getResult());
-    logger.log(Logger.Level.DEBUG, "Received response\n" + r);
+    logger.log(Logger.Level.DEBUG, "[READ] Received response\n" + r);
+  }
+
+  public void onNext(TakePhase2Response r) {
+    // do me please!
   }
 
   // https://stackoverflow.com/questions/33608680/finding-the-common-elements-between-n-lists-in-java
