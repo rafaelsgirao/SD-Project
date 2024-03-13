@@ -77,7 +77,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       TakePhase1ReleaseRequest request,
       StreamObserver<TakePhase1ReleaseResponse> responseObserver) {
     int clientId = request.getClientId();
-    state.takePhase1Release(clientId);
+    state.takeRelease(clientId);
     responseObserver.onNext(TakePhase1ReleaseResponse.getDefaultInstance());
     responseObserver.onCompleted();
   }
