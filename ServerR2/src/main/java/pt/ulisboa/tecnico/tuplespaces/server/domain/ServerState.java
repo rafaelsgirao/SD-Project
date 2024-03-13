@@ -87,7 +87,9 @@ public class ServerState {
     Tuple tuple;
     // FIXME: Check if this blows up when getMatchingTuples() returns an empty
     // list
-    while ((tuple = getMatchingTuples(pattern).get(0)) == null) {
+    while ((tuple =
+            (getMatchingTuples(pattern).isEmpty() ? null : getMatchingTuples(pattern).get(0)))
+        == null) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -131,7 +133,7 @@ public class ServerState {
     return resultTuples;
   }
 
-  public synchronized void takePhase1Release(int clientId) {
+  public synchronized void takeRelease(int clientId) {
     for (Tuple tuple : this.tuples) {
       tuple.releaseLock(clientId);
     }
@@ -142,6 +144,7 @@ public class ServerState {
     for (Tuple tuple : possibleTuples) {
       if (tuple.getClient() == clientId) {
         tuples.remove(tuple);
+        takeRelease(clientId);
         return true;
       }
     }
