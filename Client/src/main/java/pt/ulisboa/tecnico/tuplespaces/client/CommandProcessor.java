@@ -134,7 +134,7 @@ public class CommandProcessor {
     // take the tuple
 
     try {
-      String result = clientService.take(tuple);
+      String result = clientService.take(tuple, 1);
       showResult(result);
     } catch (StatusRuntimeException e) {
       showError(e);

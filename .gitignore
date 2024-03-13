@@ -243,3 +243,5 @@ $RECYCLE.BIN/
 .pre-commit-config.yaml
 .vscode
 tests/test-outputs
+
+venv

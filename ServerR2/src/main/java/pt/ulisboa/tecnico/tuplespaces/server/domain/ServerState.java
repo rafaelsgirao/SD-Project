@@ -7,7 +7,8 @@ import java.util.List;
 
 public class ServerState {
 
-  private static final Logger logger = System.getLogger(ServerState.class.getName());
+  private static final Logger logger =
+      System.getLogger(ServerState.class.getName());
 
   private List<Tuple> tuples;
 
@@ -22,25 +23,15 @@ public class ServerState {
       this.lock = false;
     }
 
-    public int getClient() {
-      return client;
-    }
+    public int getClient() { return client; }
 
-    public String getTuple() {
-      return tuple;
-    }
+    public String getTuple() { return tuple; }
 
-    public synchronized boolean isLocked() {
-      return lock;
-    }
+    public synchronized boolean isLocked() { return lock; }
 
-    private synchronized void lock() {
-      this.lock = true;
-    }
+    private synchronized void lock() { this.lock = true; }
 
-    private synchronized void unlock() {
-      this.lock = false;
-    }
+    private synchronized void unlock() { this.lock = false; }
 
     public synchronized boolean acquireLock(int client) {
       if (!isLocked()) {
@@ -85,7 +76,8 @@ public class ServerState {
 
   public synchronized String read(String pattern) {
     Tuple tuple;
-    // FIXME: Check if this blows up when getMatchingTuples() returns an empty list
+    // FIXME: Check if this blows up when getMatchingTuples() returns an empty
+    // list
     while ((tuple = getMatchingTuples(pattern).get(0)) == null) {
       try {
         wait();
@@ -110,22 +102,23 @@ public class ServerState {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
     List<String> resultTuples = new ArrayList<String>();
     for (Tuple tuple : matchingTuples) {
-      // According to faculty, a tuple that can't be locked shouldn't cause the whole
-      // takephase1 process to abort.
+      // x According to faculty, a tuple that can't be locked shouldn't cause
+      // the whole takephase1 process to abort.
       // FIXME: take should block until a matching tuple is found
-      if (!tuple.acquireLock(clientId)) {
-        logger.log(
-            Logger.Level.WARNING,
-            "Failed to acquire lock on tuple {0} for client {1}",
-            tuple.getTuple(),
-            clientId);
-      } else {
-        resultTuples.add(tuple.getTuple());
+
+      while (!tuple.acquireLock(clientId)) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
+      resultTuples.add(tuple.getTuple());
     }
-    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern", matchingTuples.size());
-    logger.log(
-        Logger.Level.DEBUG, "takePhase1: {0} tuples locked successfully", resultTuples.size());
+    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern",
+               matchingTuples.size());
+    logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples locked successfully",
+               resultTuples.size());
 
     return resultTuples;
   }
