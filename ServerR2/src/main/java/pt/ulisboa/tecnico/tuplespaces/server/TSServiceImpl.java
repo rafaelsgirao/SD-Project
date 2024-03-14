@@ -68,10 +68,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
     }
-    logger.log(
-        Logger.Level.DEBUG, "Client take phase 1: client={0}, pattern={1}", clientId, pattern);
     List<String> tuples = state.takePhase1(clientId, pattern);
-    logger.log(Logger.Level.DEBUG, "Client take phase 1: matched tuples {0}", tuples);
     responseObserver.onNext(TakePhase1Response.newBuilder().addAllReservedTuples(tuples).build());
     responseObserver.onCompleted();
   }
@@ -116,7 +113,11 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
               .withDescription(
                   "takePhase2: Failed to take tuple " + tuple + "for client " + clientId)
               .asRuntimeException());
+      logger.log(Logger.Level.ERROR, "takePhase2 failed: {0}", state.getTupleSpacesState());
+      return;
     }
+    state.takeRelease(clientId);
+
     responseObserver.onNext(TakePhase2Response.getDefaultInstance());
     responseObserver.onCompleted();
   }
