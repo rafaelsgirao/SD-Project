@@ -29,7 +29,7 @@ public class ClientMain {
       System.err.println("Incorrect arguments!");
       System.err.printf("Usage: java %s %n", Server.class.getName());
       logger.log(Logger.Level.DEBUG, Arrays.toString(args));
-      System.exit(1);
+      System.exit(0);
     }
 
     ClientService clientService = new ClientService(numServers);
@@ -38,9 +38,9 @@ public class ClientMain {
       parser.parseInput();
     } catch (InterruptedException e) {
       System.err.println("Program has been interrupted. Exiting...");
-      System.exit(1);
+    } finally {
+      clientService.shutdown();
+      System.exit(0);
     }
-
-    clientService.shutdown();
   }
 }

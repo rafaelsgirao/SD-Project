@@ -44,5 +44,6 @@ if __name__ == "__main__":
         server.wait_for_termination()
 
     except KeyboardInterrupt:
-        print("NameServer stopped")
+        print("Stopping NameServer...")
+        server.wait_for_termination()
         exit(0)

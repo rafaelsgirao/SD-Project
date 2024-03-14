@@ -220,11 +220,8 @@ public class ClientService {
     // communist tuple
     return ourTuple;
 
-    /*TODO: complete this:
-      - generate random client id (should it be random?) DONE
+    /*TODO:
       - make sure intersection of responses is working
-      - select a tuple from the intersection deterministically (i.e, get(0))
-      - implement phase 2
     */
   }
 }

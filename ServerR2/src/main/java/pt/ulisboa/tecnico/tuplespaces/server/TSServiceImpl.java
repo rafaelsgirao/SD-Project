@@ -56,7 +56,6 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       TakePhase1Request request, StreamObserver<TakePhase1Response> responseObserver) {
     String pattern = request.getSearchPattern();
     int clientId = request.getClientId();
-    // FIXME: validate client id is valid (i.e, not unset!) :DONE:
     if (!clientIdIsValid(clientId)) {
       logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
       responseObserver.onError(
@@ -96,8 +95,6 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
     String tuple = request.getTuple().replace("\n", "");
     System.err.println("Tuple do servidor: " + tuple);
-
-    // FIXME: validar argumentos :DONE:
 
     int clientId = request.getClientId();
     if (!clientIdIsValid(clientId)) {
