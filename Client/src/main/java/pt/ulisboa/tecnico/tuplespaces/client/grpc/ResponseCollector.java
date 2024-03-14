@@ -5,14 +5,24 @@ import java.util.ArrayList;
 
 public class ResponseCollector {
   ArrayList<String> collectedResponses;
-  ArrayList<ArrayList<String>> takeResponses;
+  ArrayList<ArrayList<String>> tupleLists;
   private int received;
+  private boolean success;
   private static final Logger logger = System.getLogger(ResponseCollector.class.getName());
 
   public ResponseCollector() {
     this.collectedResponses = new ArrayList<>();
-    this.takeResponses = new ArrayList<>();
+    this.tupleLists = new ArrayList<>();
     this.received = 0;
+    this.success = true;
+  }
+
+  public synchronized void setFail() {
+    this.success = false;
+  }
+
+  public synchronized boolean isFail() {
+    return !this.success;
   }
 
   public synchronized void addResponse(String response) {
@@ -23,7 +33,7 @@ public class ResponseCollector {
 
   public synchronized void addResponse(ArrayList<String> response) {
     this.received++;
-    this.takeResponses.add(response);
+    this.tupleLists.add(response);
     notifyAll();
   }
 
@@ -31,8 +41,8 @@ public class ResponseCollector {
     return this.collectedResponses;
   }
 
-  public synchronized ArrayList<ArrayList<String>> getTakeResponses() {
-    return this.takeResponses;
+  public synchronized ArrayList<ArrayList<String>> getTupleLists() {
+    return this.tupleLists;
   }
 
   public synchronized void waitUntilNReceived(int n) throws InterruptedException {

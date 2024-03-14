@@ -43,6 +43,7 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   @Override
   public void onError(Throwable throwable) {
     logger.log(Logger.Level.ERROR, throwable.getMessage());
+    collector.setFail();
   }
 
   @Override

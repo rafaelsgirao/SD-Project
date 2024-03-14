@@ -129,7 +129,12 @@ public class ClientService {
     }
 
     c.waitUntilNReceived(numServers);
-    System.err.println("Received all responses ON PUT");
+
+    logger.log(Logger.Level.DEBUG, "Received all responses ON PUT\n");
+
+    if (c.isFail()) {
+      return "ERR: put";
+    }
 
     String response = c.getResponses().get(0);
 
@@ -152,6 +157,9 @@ public class ClientService {
     // wait for the first response
     c.waitUntilNReceived(1);
 
+    if (c.isFail()) {
+      return "ERR: read";
+    }
     String response = c.getResponses().get(0);
     return response;
   }
@@ -166,26 +174,27 @@ public class ClientService {
 
     c.waitUntilNReceived(1);
 
-    return c.getResponses();
+    return c.getTupleLists().get(0);
   }
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
     logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 begin\n");
 
-    ResponseCollector c = new ResponseCollector();
+    ResponseCollector c1 = new ResponseCollector();
+    ResponseCollector c2 = new ResponseCollector();
 
     TakePhase1Request phase1_request =
         TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(this.clientId).build();
 
     for (Integer id : delayer) {
-      stubs[id].takePhase1(phase1_request, new ResponseObserver(c));
+      stubs[id].takePhase1(phase1_request, new ResponseObserver(c1));
     }
     logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
-    c.waitUntilNReceived(numServers);
+    c1.waitUntilNReceived(numServers);
     logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
 
-    ArrayList<ArrayList<String>> phase1_responses = c.getTakeResponses();
+    ArrayList<ArrayList<String>> phase1_responses = c1.getTupleLists();
 
     // Perform intersection of all responses.
     ArrayList<String> phase1_result = new ArrayList<String>();
@@ -214,13 +223,13 @@ public class ClientService {
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
       // FIXME: try-catch this. Server may decline if tuple isn't locked by this client
-      stubs[id].takePhase2(phase2_request, new ResponseObserver(c));
+      stubs[id].takePhase2(phase2_request, new ResponseObserver(c2));
     }
-    c.waitUntilNReceived(numServers);
+    c2.waitUntilNReceived(numServers);
     // communist tuple
     return ourTuple;
 
-    /*TODO:
+    /* TODO:
       - make sure intersection of responses is working
     */
   }
