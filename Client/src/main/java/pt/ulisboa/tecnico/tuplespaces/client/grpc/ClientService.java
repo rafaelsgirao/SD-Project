@@ -59,7 +59,7 @@ public class ClientService {
     LookupRequest request_ns =
         LookupRequest.newBuilder().setName(SERVICE_NAME).setQualifier(qualifier).build();
     LookupResponse response_ns = stubNS.lookup(request_ns);
-
+    channelNS.shutdownNow();
     return response_ns.getResultList();
   }
 
