@@ -153,41 +153,69 @@ public class ClientService {
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
-    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 begin\n");
-
-    ResponseCollector c1 = new ResponseCollector();
-    ResponseCollector c2 = new ResponseCollector();
-
-    TakePhase1Request phase1_request =
-        TakePhase1Request.newBuilder().setSearchPattern(pattern).setClientId(this.clientId).build();
-
-    for (Integer id : delayer) {
-      stubs[id].takePhase1(phase1_request, new ResponseObserver(c1));
-    }
-    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
-    c1.waitUntilNReceived(numServers);
-    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
-
-    ArrayList<ArrayList<String>> phase1_responses = c1.getTupleLists();
-
-    // Perform intersection of all responses.
     ArrayList<String> phase1_result = new ArrayList<String>();
-    phase1_result.addAll(phase1_responses.get(0));
-    phase1_responses.remove(0);
-    for (ArrayList<String> response : phase1_responses) {
-      phase1_result.retainAll(response);
-    }
+    ResponseCollector c2 = new ResponseCollector();
+    do {
+      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 start loop\n");
 
-    if (phase1_result.size() == 0) {
-      // FIXME: Caso em que a intsc na fase 1 retorna vazio:
-      // Caso tenhamos um tuplo disponivel na maioria dos servers, repetir a fase 1.
-      // Caso contrario (nao obtivemos bloqueio da maioria dos servers) (concretamente isto é o
-      // quê??),
-      // Devemos dar back-off (pedir p/ desbloquear os tuplos todos) para deixar outro cliente
-      // tentar.
-      logger.log(Logger.Level.WARNING, "phase1 interception empty!");
-      return "";
-    }
+      ResponseCollector c1 = new ResponseCollector();
+
+      ResponseCollector c3 = new ResponseCollector();
+
+      TakePhase1Request phase1_request =
+          TakePhase1Request.newBuilder()
+              .setSearchPattern(pattern)
+              .setClientId(this.clientId)
+              .build();
+
+      for (Integer id : delayer) {
+        stubs[id].takePhase1(phase1_request, new ResponseObserver(c1));
+      }
+      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
+      c1.waitUntilNReceived(numServers);
+      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
+
+      ArrayList<ArrayList<String>> phase1_responses = c1.getTupleLists();
+
+      // Perform intersection of all responses.
+
+      phase1_result.addAll(phase1_responses.get(0));
+      phase1_responses.remove(0);
+      int emptyLists = 0;
+      for (ArrayList<String> response : phase1_responses) {
+        if (response.size() == 0) {
+          emptyLists++;
+        }
+        phase1_result.retainAll(response);
+      }
+
+      if (phase1_result.size() == 0) {
+        System.err.println("number of empty lists" + emptyLists);
+
+        if (emptyLists > numServers / 2) { // if we have a majority of empty lists
+          // release request
+          TakePhase1ReleaseRequest release_request =
+              TakePhase1ReleaseRequest.newBuilder().setClientId(this.clientId).build();
+          for (Integer id : delayer) {
+            stubs[id].takePhase1Release(release_request, new ResponseObserver(c3));
+          }
+          c2.waitUntilNReceived(numServers);
+          // sleep :TODO: do this in a better way (random and increasing)
+          Thread.sleep(3000);
+          // repeat phase 1
+        } else { // if we have a majority of non-empty lists
+          // sleep :TODO: do this in a better way (random and increasing)
+          Thread.sleep(3000);
+          // repeat phase 1
+        }
+
+        logger.log(Logger.Level.WARNING, "phase1 interception empty!");
+
+        // Reset phase1_responses to work with the original responses
+        phase1_responses = c1.getTupleLists();
+      }
+    } while (phase1_result.size() == 0);
+
     logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
 
     // Take the first tuple from intersection.
