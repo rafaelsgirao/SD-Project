@@ -1,13 +1,7 @@
 package pt.ulisboa.tecnico.tuplespaces.server;
 
-import io.grpc.BindableService;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import pt.tecnico.grpc.NameServer.DeleteRequest;
-import pt.tecnico.grpc.NameServer.DeleteResponse;
 import pt.tecnico.grpc.NameServer.RegisterRequest;
 import pt.tecnico.grpc.NameServerServiceGrpc;
 
@@ -104,7 +98,7 @@ public class ServerMain {
                     DeleteRequest delete_request =
                         DeleteRequest.newBuilder().setName(service_name).setAddress(target).build();
                     try {
-                      DeleteResponse delete_response = stub.delete(delete_request);
+                      stub.delete(delete_request);
                     } catch (StatusRuntimeException e) {
                       System.out.println(e.getMessage());
                     }

@@ -2,14 +2,14 @@ package pt.ulisboa.tecnico.tuplespaces.server.domain;
 
 import java.lang.System.Logger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ServerState {
 
   private static final Logger logger = System.getLogger(ServerState.class.getName());
 
-  private List<Tuple> tuples;
+  private CopyOnWriteArrayList<Tuple> tuples;
 
   public class Tuple {
     private boolean lock;
@@ -31,40 +31,48 @@ public class ServerState {
     }
 
     public synchronized boolean isLocked() {
-      return lock;
+      return this.lock;
     }
 
-    private synchronized void lock() {
+    public synchronized boolean hasLock(int clientId) {
+      if (!this.lock) {
+        return false;
+      }
+      return this.client == clientId;
+    }
+
+    private synchronized void lock(int clientId) {
       this.lock = true;
+      this.client = clientId;
     }
 
     private synchronized void unlock() {
+      this.client = -1;
       this.lock = false;
     }
 
     public synchronized boolean acquireLock(int client) {
-      if (!isLocked()) {
-        this.lock();
-        this.client = client;
+      if (hasLock(client)) {
         return true;
       }
-      return this.client == client;
+      if (!isLocked()) {
+        this.lock(client);
+        return true;
+      }
+      return false;
     }
 
-    public synchronized void releaseLock(int clientId) {
-      if (isLocked()) {
-        if (!(this.client == clientId)) {
-          return;
-        }
-        this.unlock();
-        this.client = -1;
-        return;
+    public synchronized boolean releaseLock(int clientId) {
+      if (!hasLock(clientId)) {
+        return false;
       }
+      this.unlock();
+      return true;
     }
   }
 
   public ServerState() {
-    this.tuples = Collections.synchronizedList(new ArrayList<Tuple>());
+    this.tuples = new CopyOnWriteArrayList<Tuple>();
   }
 
   public synchronized void put(String tupleString) {
@@ -73,7 +81,8 @@ public class ServerState {
     notifyAll();
   }
 
-  private List<Tuple> getMatchingTuples(String pattern) {
+  // FIXME: make this not synchronized after ConditionMap implemented (?)
+  private synchronized List<Tuple> getMatchingTuples(String pattern) {
     List<Tuple> result = new ArrayList<>();
     for (Tuple tuple : this.tuples) {
       if (tuple.getTuple().matches(pattern)) {
@@ -116,6 +125,7 @@ public class ServerState {
       try {
         for (Tuple tuple : matchingTuples) {
           if (tuple.acquireLock(clientId)) {
+            logger.log(Logger.Level.DEBUG, "takePhase1: {0} locked", tuple.getTuple());
             resultTuples.add(tuple.getTuple());
           }
         }
@@ -139,19 +149,30 @@ public class ServerState {
     }
   }
 
-  public boolean takePhase2(String tupleString, int clientId) {
+  public synchronized boolean takePhase2(String tupleString, int clientId) {
     List<Tuple> possibleTuples = getMatchingTuples(tupleString);
     for (Tuple tuple : possibleTuples) {
-      if (tuple.getClient() == clientId) {
+      logger.log(
+          Logger.Level.DEBUG,
+          "Trying to remove tuple: {0}, client {1}, has lock {2}",
+          tuple.getTuple(),
+          clientId,
+          tuple.hasLock(clientId));
+      if (tuple.hasLock(clientId)) {
         tuples.remove(tuple);
-        takeRelease(clientId);
         return true;
       }
+      logger.log(
+          Logger.Level.WARNING,
+          "Failed to remove tuple: {0}, client {1}, has lock {2}",
+          tuple.getTuple(),
+          clientId,
+          tuple.hasLock(clientId));
     }
     return false;
   }
 
-  public List<String> getTupleSpacesState() {
+  public synchronized List<String> getTupleSpacesState() {
     List<String> result = new ArrayList<String>();
     for (Tuple tuple : this.tuples) {
       result.add(tuple.getTuple());
