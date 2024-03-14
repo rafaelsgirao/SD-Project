@@ -63,21 +63,14 @@ public class ClientService {
     return response_ns.getResultList();
   }
 
-  /* TODO: This class should implement the front-end of the replicated TupleSpaces service
-  (according to the Xu-Liskov algorithm)*/
-
   public ClientService(int numServers) {
     this.numServers = numServers;
-    /* TODO: create channel/stub for each server */
-    // this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build(); TODO: remove
-    // this.stub = TupleSpacesReplicaGrpc.newBlockingStub(channel);
     channels = new ManagedChannel[numServers];
     stubs = new TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[numServers];
 
     this.clientId = randomClientId();
 
     for (int i = 0; i < numServers; i++) {
-      // TODO: verify if each qualifier lookup request has only one server (?)
       String server = getServersFromNameserver(QUALIFIERS.get(i)).get(0);
       channels[i] = ManagedChannelBuilder.forTarget(server).usePlaintext().build();
       stubs[i] = TupleSpacesReplicaGrpc.newStub(channels[i]);
@@ -91,26 +84,7 @@ public class ClientService {
   /* This method allows the command processor to set the request delay assigned to a given server */
   public void setDelay(int id, int delay) {
     delayer.setDelay(id, delay);
-
-    /* TODO: Remove this debug snippet */
-    System.out.println("[Debug only]: After setting the delay, I'll test it");
-    for (Integer i : delayer) {
-      System.out.println("[Debug only]: Now I can send request to stub[" + i + "]");
-    }
-    System.out.println("[Debug only]: Done.");
   }
-
-  /* TODO: individual methods for each remote operation of the TupleSpaces service */
-
-  /* Example: How to use the delayer before sending requests to each server
-   *          Before entering each iteration of this loop, the delayer has already
-   *          slept for the delay associated with server indexed by 'id'.
-   *          id is in the range 0..(numServers-1).
-
-      for (Integer id : delayer) {
-          //stub[id].some_remote_method(some_arguments);
-      }
-  */
 
   public void shutdown() {
     for (int i = 0; i < channels.length; i++) {
@@ -222,7 +196,6 @@ public class ClientService {
     TakePhase2Request phase2_request =
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
-      // FIXME: try-catch this. Server may decline if tuple isn't locked by this client
       stubs[id].takePhase2(phase2_request, new ResponseObserver(c2));
     }
     c2.waitUntilNReceived(numServers);
