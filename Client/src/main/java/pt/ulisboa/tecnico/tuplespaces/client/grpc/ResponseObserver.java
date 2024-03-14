@@ -5,7 +5,6 @@ import java.lang.System.Logger;
 import java.util.ArrayList;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadResponse;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Response;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase2Response;
 
 public class ResponseObserver<R> implements StreamObserver<R> {
 
@@ -23,8 +22,6 @@ public class ResponseObserver<R> implements StreamObserver<R> {
       onNext((ReadResponse) r);
     } else if (r instanceof TakePhase1Response) {
       onNext((TakePhase1Response) r);
-    } else if (r instanceof TakePhase2Response) {
-      onNext((TakePhase2Response) r);
     } else {
       collector.addResponse(r.toString());
       logger.log(Logger.Level.DEBUG, "[GENERIC] Received response\n" + r);
@@ -41,11 +38,6 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   public void onNext(ReadResponse r) {
     collector.addResponse(r.getResult());
     logger.log(Logger.Level.DEBUG, "[READ] Received response\n" + r);
-  }
-
-  public void onNext(TakePhase2Response r) {
-    // do something here :TODO:
-    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 2] Received response\n" + r);
   }
 
   @Override

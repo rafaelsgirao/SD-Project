@@ -198,6 +198,7 @@ public class ClientService {
     logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
 
     // Take the first tuple from intersection.
+    // what to do if empty?
     String ourTuple = phase1_result.get(0).get(0);
     TakePhase2Request phase2_request =
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
