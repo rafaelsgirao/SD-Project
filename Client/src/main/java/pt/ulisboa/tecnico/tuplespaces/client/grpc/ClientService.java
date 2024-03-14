@@ -129,6 +129,7 @@ public class ClientService {
     }
 
     c.waitUntilNReceived(numServers);
+    System.err.println("Received all responses ON PUT");
 
     String response = c.getResponses().get(0);
 
@@ -181,8 +182,9 @@ public class ClientService {
     }
 
     c.waitUntilNReceived(numServers);
+    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
 
-    ArrayList<String> phase1_result = c.getResponses();
+    ArrayList<ArrayList<String>> phase1_result = c.getTakeResponses();
 
     if (phase1_result.size() == 0) {
       // FIXME: Caso em que a intsc na fase 1 retorna vazio:
@@ -193,16 +195,17 @@ public class ClientService {
       // tentar.
       return "";
     }
+    logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
 
     // Take the first tuple from intersection.
-    String ourTuple = phase1_result.get(0);
+    String ourTuple = phase1_result.get(0).get(0);
     TakePhase2Request phase2_request =
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
       // FIXME: try-catch this. Server may decline if tuple isn't locked by this client
       stubs[id].takePhase2(phase2_request, new ResponseObserver(c));
     }
-
+    c.waitUntilNReceived(numServers);
     // communist tuple
     return ourTuple;
 

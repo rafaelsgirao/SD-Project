@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
+import java.util.ArrayList;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadResponse;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Response;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase2Response;
@@ -30,6 +31,13 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     }
   }
 
+  public void onNext(TakePhase1Response r) {
+    ArrayList<String> reservedTuples = new ArrayList<String>();
+    reservedTuples.addAll(r.getReservedTuplesList());
+    collector.addResponse(reservedTuples);
+    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 1] Received response\n" + r);
+  }
+
   public void onNext(ReadResponse r) {
     collector.addResponse(r.getResult());
     logger.log(Logger.Level.DEBUG, "[READ] Received response\n" + r);
@@ -38,22 +46,6 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   public void onNext(TakePhase2Response r) {
     // do something here :TODO:
     logger.log(Logger.Level.DEBUG, "[TAKE PHASE 2] Received response\n" + r);
-  }
-
-  // https://stackoverflow.com/questions/33608680/finding-the-common-elements-between-n-lists-in-java
-  // This method handles the intersection of returned tuples from all servers.
-  public void onNext(TakePhase1Response r) {
-    if (collector.getResponses().size() != 0) {
-      boolean changed = collector.retainAll(r.getReservedTuplesList());
-      if (changed) {
-        logger.log(Logger.Level.DEBUG, "TakePhase1 intersection ocurred!");
-      }
-      return;
-    }
-    for (String tuple : r.getReservedTuplesList()) {
-      collector.addResponse(tuple);
-    }
-    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 1] Received response\n" + r);
   }
 
   @Override
