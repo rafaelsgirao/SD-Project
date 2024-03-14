@@ -46,7 +46,7 @@ public class ClientService {
   private Integer numServers;
 
   private int randomClientId() {
-    return (int) (Math.random() * 1000000);
+    return (int) (Math.random() * 1000000 + 1);
   }
 
   public List<String> getServersFromNameserver(String qualifier) {

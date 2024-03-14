@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.tuplespaces.server;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
 import java.util.List;
@@ -54,10 +53,16 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   }
 
   public void takePhase1(
-      // FIXME: validate client id is valid (i.e, not unset!)
       TakePhase1Request request, StreamObserver<TakePhase1Response> responseObserver) {
     String pattern = request.getSearchPattern();
     int clientId = request.getClientId();
+    // FIXME: validate client id is valid (i.e, not unset!) :DONE:
+    if (!clientIdIsValid(clientId)) {
+      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
+      responseObserver.onError(
+          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
+      return;
+    }
     if (!patternIsValid(pattern)) {
       logger.log(Logger.Level.WARNING, "Invalid search pattern {0}", pattern);
       responseObserver.onError(
@@ -76,6 +81,12 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       TakePhase1ReleaseRequest request,
       StreamObserver<TakePhase1ReleaseResponse> responseObserver) {
     int clientId = request.getClientId();
+    if (!clientIdIsValid(clientId)) {
+      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
+      responseObserver.onError(
+          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
+      return;
+    }
     state.takeRelease(clientId);
     responseObserver.onNext(TakePhase1ReleaseResponse.getDefaultInstance());
     responseObserver.onCompleted();
@@ -85,12 +96,26 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
     String tuple = request.getTuple().replace("\n", "");
     System.err.println("Tuple do servidor: " + tuple);
+
+    // FIXME: validar argumentos :DONE:
+
     int clientId = request.getClientId();
-    // FIXME: validar argumentos
+    if (!clientIdIsValid(clientId)) {
+      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
+      responseObserver.onError(
+          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
+      return;
+    }
+    if (!tupleIsValid(tuple)) {
+      logger.log(Logger.Level.WARNING, "Invalid tuple {0}", tuple);
+      responseObserver.onError(
+          INVALID_ARGUMENT.withDescription("Invalid tuple.").asRuntimeException());
+      return;
+    }
 
     if (!state.takePhase2(tuple, clientId)) {
       responseObserver.onError(
-          Status.INVALID_ARGUMENT
+          INVALID_ARGUMENT
               .withDescription(
                   "takePhase2: Failed to take tuple " + tuple + "for client " + clientId)
               .asRuntimeException());
@@ -113,6 +138,10 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   }
 
   // Utils
+  private boolean clientIdIsValid(int clientId) {
+    return clientId > 0;
+  }
+
   private boolean tupleIsValid(String input) {
     if (input.contains(" ")
         || !input.substring(0, 1).equals(BGN_TUPLE)
