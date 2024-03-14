@@ -171,6 +171,7 @@ public class ClientService {
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
+    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 begin\n");
 
     ResponseCollector c = new ResponseCollector();
 
@@ -180,11 +181,19 @@ public class ClientService {
     for (Integer id : delayer) {
       stubs[id].takePhase1(phase1_request, new ResponseObserver(c));
     }
-
+    logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
     c.waitUntilNReceived(numServers);
     logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
 
-    ArrayList<ArrayList<String>> phase1_result = c.getTakeResponses();
+    ArrayList<ArrayList<String>> phase1_responses = c.getTakeResponses();
+
+    // Perform intersection of all responses.
+    ArrayList<String> phase1_result = new ArrayList<String>();
+    phase1_result.addAll(phase1_responses.get(0));
+    phase1_responses.remove(0);
+    for (ArrayList<String> response : phase1_responses) {
+      phase1_result.retainAll(response);
+    }
 
     if (phase1_result.size() == 0) {
       // FIXME: Caso em que a intsc na fase 1 retorna vazio:
@@ -193,13 +202,14 @@ public class ClientService {
       // quê??),
       // Devemos dar back-off (pedir p/ desbloquear os tuplos todos) para deixar outro cliente
       // tentar.
+      logger.log(Logger.Level.WARNING, "phase1 interception empty!");
       return "";
     }
     logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
 
     // Take the first tuple from intersection.
     // what to do if empty?
-    String ourTuple = phase1_result.get(0).get(0);
+    String ourTuple = phase1_result.get(0);
     TakePhase2Request phase2_request =
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
