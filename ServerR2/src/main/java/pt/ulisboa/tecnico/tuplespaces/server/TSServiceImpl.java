@@ -66,7 +66,6 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     }
     logger.log(
         Logger.Level.DEBUG, "Client take phase 1: client={0}, pattern={1}", clientId, pattern);
-
     List<String> tuples = state.takePhase1(clientId, pattern);
     logger.log(Logger.Level.DEBUG, "Client take phase 1: matched tuples {0}", tuples);
     responseObserver.onNext(TakePhase1Response.newBuilder().addAllReservedTuples(tuples).build());

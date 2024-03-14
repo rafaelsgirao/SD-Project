@@ -85,8 +85,6 @@ public class ServerState {
 
   public synchronized String read(String pattern) {
     Tuple tuple;
-    // FIXME: Check if this blows up when getMatchingTuples() returns an empty
-    // list
     while ((tuple =
             (getMatchingTuples(pattern).isEmpty() ? null : getMatchingTuples(pattern).get(0)))
         == null) {
@@ -112,19 +110,21 @@ public class ServerState {
   public synchronized List<String> takePhase1(int clientId, String pattern) {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
     List<String> resultTuples = new ArrayList<String>();
-    for (Tuple tuple : matchingTuples) {
-      // x According to faculty, a tuple that can't be locked shouldn't cause
-      // the whole takephase1 process to abort.
-      // FIXME: take should block until a matching tuple is found
-
-      while (!tuple.acquireLock(clientId)) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+    // According to faculty, a tuple that can't be locked shouldn't cause
+    // the whole takephase1 process to abort.
+    while (resultTuples.isEmpty()) {
+      try {
+        for (Tuple tuple : matchingTuples) {
+          if (tuple.acquireLock(clientId)) {
+            resultTuples.add(tuple.getTuple());
+          }
         }
+        if (resultTuples.isEmpty()) {
+          wait();
+        }
+      } catch (InterruptedException e) {
+        logger.log(Logger.Level.ERROR, "takePhase1: {0}", e);
       }
-      resultTuples.add(tuple.getTuple());
     }
     logger.log(Logger.Level.DEBUG, "takePhase1: {0} tuples matched pattern", matchingTuples.size());
     logger.log(
