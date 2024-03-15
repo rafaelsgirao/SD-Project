@@ -9,12 +9,9 @@ import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplic
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
 import pt.ulisboa.tecnico.tuplespaces.server.domain.ServerState;
 
-// FIXME: check arguments from client are correct here (not serverstate);
 public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImplBase {
 
   private static final Logger logger = System.getLogger(TSServiceImpl.class.getName());
-
-  // ---------------------------------
 
   private static final String BGN_TUPLE = "<";
   private static final String END_TUPLE = ">";

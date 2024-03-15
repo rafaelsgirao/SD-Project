@@ -150,7 +150,6 @@ public class CommandProcessor {
 
     String qualifier = split[1];
 
-    // TODO: check if this is  -1
     int serverId = indexOfServerQualifier(qualifier);
     // get the tuple spaces state
     String result = clientService.getTupleSpacesState(serverId).toString();

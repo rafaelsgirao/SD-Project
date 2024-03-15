@@ -22,10 +22,6 @@ public class ServerState {
       this.lock = false;
     }
 
-    public int getClient() {
-      return client;
-    }
-
     public String getTuple() {
       return tuple;
     }
@@ -81,7 +77,6 @@ public class ServerState {
     notifyAll();
   }
 
-  // FIXME: make this not synchronized after ConditionMap implemented (?)
   private synchronized List<Tuple> getMatchingTuples(String pattern) {
     List<Tuple> result = new ArrayList<>();
     for (Tuple tuple : this.tuples) {
@@ -110,8 +105,7 @@ public class ServerState {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
     List<String> resultTuples = new ArrayList<>();
     boolean lockedTuple = false;
-    // According to faculty, a tuple that can't be locked shouldn't cause
-    // the whole takephase1 process to abort.
+
     while (resultTuples.isEmpty() && !lockedTuple) {
       lockedTuple = false;
       try {
@@ -173,7 +167,7 @@ public class ServerState {
     return false;
   }
 
-  public synchronized List<String> getTupleSpacesState() {
+  public List<String> getTupleSpacesState() {
     List<String> result = new ArrayList<>();
     for (Tuple tuple : this.tuples) {
       result.add(tuple.getTuple());

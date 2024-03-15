@@ -188,10 +188,8 @@ public class ClientService {
             stubs[id].takePhase1Release(release_request, new ResponseObserver<>(c3));
           }
           c3.waitUntilNReceived(numServers);
-          // sleep :TODO: do this in a better way (random and increasing)          // repeat phase 1
           backoff.backoff();
         } else { // if we have a majority of non-empty lists
-          // sleep :TODO: do this in a better way (random and increasing)
           backoff.backoff();
           // repeat phase 1
         }
@@ -216,9 +214,5 @@ public class ClientService {
     c2.waitUntilNReceived(numServers);
     // communist tuple
     return ourTuple;
-
-    /* TODO:
-      - make sure intersection of responses is working
-    */
   }
 }
