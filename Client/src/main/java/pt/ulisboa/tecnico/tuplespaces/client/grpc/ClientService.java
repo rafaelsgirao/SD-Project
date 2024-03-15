@@ -20,15 +20,11 @@ import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplic
  */
 public class ClientService {
 
-  private static final Logger logger = System.getLogger(ResponseCollector.class.getName());
+  private static final Logger logger = System.getLogger(ClientService.class.getName());
 
   OrderedDelayer delayer;
 
-  private static int clientId;
-
-  // Nameserver.
-  private ManagedChannel channelNS;
-  NameServerServiceGrpc.NameServerServiceBlockingStub stubNS;
+  private int clientId;
 
   // Nameserver's host and port
   private static final String NAMESERVER_TARGET = "localhost:5001";
@@ -52,7 +48,9 @@ public class ClientService {
   public List<String> getServersFromNameserver(String qualifier) {
 
     // Connect to Name Server
-    channelNS = ManagedChannelBuilder.forTarget(NAMESERVER_TARGET).usePlaintext().build();
+    ManagedChannel channelNS =
+        ManagedChannelBuilder.forTarget(NAMESERVER_TARGET).usePlaintext().build();
+    NameServerServiceGrpc.NameServerServiceBlockingStub stubNS;
     stubNS = NameServerServiceGrpc.newBlockingStub(channelNS);
 
     // Lookup server
@@ -99,7 +97,7 @@ public class ClientService {
     PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
 
     for (Integer id : delayer) {
-      stubs[id].put(request, new ResponseObserver(c));
+      stubs[id].put(request, new ResponseObserver<>(c));
     }
 
     c.waitUntilNReceived(numServers);
@@ -110,12 +108,7 @@ public class ClientService {
       return "ERR: put";
     }
 
-    String response = c.getResponses().get(0);
-
-    return response;
-    //  PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
-    //   PutResponse response = stub.put(request);
-    //   return response.toString();
+    return c.getResponses().get(0);
   }
 
   public String read(String pattern) throws StatusRuntimeException, InterruptedException {
@@ -125,7 +118,7 @@ public class ClientService {
     ReadRequest request = ReadRequest.newBuilder().setSearchPattern(pattern).build();
 
     for (Integer id : delayer) {
-      stubs[id].read(request, new ResponseObserver(c));
+      stubs[id].read(request, new ResponseObserver<>(c));
     }
 
     // wait for the first response
@@ -134,8 +127,7 @@ public class ClientService {
     if (c.isFail()) {
       return "ERR: read";
     }
-    String response = c.getResponses().get(0);
-    return response;
+    return c.getResponses().get(0);
   }
 
   public List<String> getTupleSpacesState(int serverId)
@@ -144,7 +136,7 @@ public class ClientService {
     ResponseCollector c = new ResponseCollector();
     getTupleSpacesStateRequest request = getTupleSpacesStateRequest.getDefaultInstance();
 
-    stubs[serverId].getTupleSpacesState(request, new ResponseObserver(c));
+    stubs[serverId].getTupleSpacesState(request, new ResponseObserver<>(c));
 
     c.waitUntilNReceived(1);
 
@@ -153,7 +145,8 @@ public class ClientService {
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
-    ArrayList<String> phase1_result = new ArrayList<String>();
+    ArrayList<String> phase1_result = new ArrayList<>();
+    ArrayList<ArrayList<String>> phase1_responses;
     ResponseCollector c2 = new ResponseCollector();
     do {
       logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 start loop\n");
@@ -169,13 +162,13 @@ public class ClientService {
               .build();
 
       for (Integer id : delayer) {
-        stubs[id].takePhase1(phase1_request, new ResponseObserver(c1));
+        stubs[id].takePhase1(phase1_request, new ResponseObserver<>(c1));
       }
       logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
       c1.waitUntilNReceived(numServers);
       logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
 
-      ArrayList<ArrayList<String>> phase1_responses = c1.getTupleLists();
+      phase1_responses = c1.getTupleLists();
 
       // Perform intersection of all responses.
 
@@ -183,13 +176,13 @@ public class ClientService {
       phase1_responses.remove(0);
       int emptyLists = 0;
       for (ArrayList<String> response : phase1_responses) {
-        if (response.size() == 0) {
+        if (response.isEmpty()) {
           emptyLists++;
         }
         phase1_result.retainAll(response);
       }
 
-      if (phase1_result.size() == 0) {
+      if (phase1_result.isEmpty()) {
         System.err.println("number of empty lists" + emptyLists);
 
         if (emptyLists > numServers / 2) { // if we have a majority of empty lists
@@ -197,7 +190,7 @@ public class ClientService {
           TakePhase1ReleaseRequest release_request =
               TakePhase1ReleaseRequest.newBuilder().setClientId(this.clientId).build();
           for (Integer id : delayer) {
-            stubs[id].takePhase1Release(release_request, new ResponseObserver(c3));
+            stubs[id].takePhase1Release(release_request, new ResponseObserver<>(c3));
           }
           c2.waitUntilNReceived(numServers);
           // sleep :TODO: do this in a better way (random and increasing)
@@ -209,12 +202,12 @@ public class ClientService {
           // repeat phase 1
         }
 
-        logger.log(Logger.Level.WARNING, "phase1 interception empty!");
+        logger.log(Logger.Level.WARNING, "phase1 intersection empty!");
 
         // Reset phase1_responses to work with the original responses
-        phase1_responses = c1.getTupleLists();
+        // phase1_responses = c1.getTupleLists();
       }
-    } while (phase1_result.size() == 0);
+    } while (phase1_result.isEmpty());
 
     logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
 
@@ -224,7 +217,7 @@ public class ClientService {
     TakePhase2Request phase2_request =
         TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
-      stubs[id].takePhase2(phase2_request, new ResponseObserver(c2));
+      stubs[id].takePhase2(phase2_request, new ResponseObserver<>(c2));
     }
     c2.waitUntilNReceived(numServers);
     // communist tuple
