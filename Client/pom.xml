@@ -24,6 +24,7 @@
 		<server.host>localhost</server.host>
 		<server.port>5001</server.port>
 		<server.service>TupleSpaces</server.service>
+		<client.id>1</client.id>
 
 	</properties>
 
@@ -70,6 +71,7 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
+						<argument>${client.id}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

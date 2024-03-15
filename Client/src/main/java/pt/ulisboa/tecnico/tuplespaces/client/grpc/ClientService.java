@@ -42,10 +42,6 @@ public class ClientService {
 
   private Integer numServers;
 
-  private int randomClientId() {
-    return (int) (Math.random() * 1000000 + 1);
-  }
-
   public List<String> getServersFromNameserver(String qualifier) {
 
     // Connect to Name Server
@@ -62,12 +58,12 @@ public class ClientService {
     return response_ns.getResultList();
   }
 
-  public ClientService(int numServers) {
+  public ClientService(int numServers, int ID) {
     this.numServers = numServers;
     channels = new ManagedChannel[numServers];
     stubs = new TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[numServers];
 
-    this.clientId = randomClientId();
+    this.clientId = ID;
 
     for (int i = 0; i < numServers; i++) {
       String server = getServersFromNameserver(QUALIFIERS.get(i)).get(0);

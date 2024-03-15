@@ -25,14 +25,16 @@ public class ClientMain {
       }
     }
 
-    if (args.length != 0) {
+    if (args.length != 1) {
       System.err.println("Incorrect arguments!");
-      System.err.printf("Usage: java %s %n", Server.class.getName());
+      System.err.printf("Usage: java %s <client ID> %n", Server.class.getName());
       logger.log(Logger.Level.DEBUG, Arrays.toString(args));
       System.exit(0);
     }
 
-    ClientService clientService = new ClientService(numServers);
+    int clientID = Integer.parseInt(args[0]);
+
+    ClientService clientService = new ClientService(numServers, clientID);
     CommandProcessor parser = new CommandProcessor(clientService);
     try {
       parser.parseInput();
