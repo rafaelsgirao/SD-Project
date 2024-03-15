@@ -23,7 +23,7 @@ public class ServerMain {
   private static String target;
 
   // NameServer target (host:port)
-  private static String NAMESERVER_TARGET = "localhost:5001";
+  private static final String NAMESERVER_TARGET = "localhost:5001";
 
   // ----------- DEBUG ----------------
   private static final boolean DEBUG_FLAG = (Boolean.getBoolean("debug"));
@@ -53,7 +53,7 @@ public class ServerMain {
     }
 
     host = "localhost";
-    port = Integer.valueOf(args[0]);
+    port = Integer.parseInt(args[0]);
     qualifier = args[1]; // not used for phase 1
 
     service_name = "TupleSpaces";

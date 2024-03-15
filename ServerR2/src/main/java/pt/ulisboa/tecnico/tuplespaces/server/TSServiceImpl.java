@@ -145,12 +145,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   }
 
   private boolean tupleIsValid(String input) {
-    if (input.contains(" ")
-        || !input.substring(0, 1).equals(BGN_TUPLE)
-        || !input.endsWith(END_TUPLE)) {
-      return false;
-    }
-    return true;
+    return !input.contains(" ") && input.startsWith(BGN_TUPLE) && input.endsWith(END_TUPLE);
   }
 
   private boolean patternIsValid(String pattern) {

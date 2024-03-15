@@ -82,8 +82,8 @@ public class ClientService {
   }
 
   public void shutdown() {
-    for (int i = 0; i < channels.length; i++) {
-      channels[i].shutdown();
+    for (ManagedChannel channel : channels) {
+      channel.shutdown();
     }
   }
 
