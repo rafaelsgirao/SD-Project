@@ -20,5 +20,7 @@ public class ExponentialBackoff {
     currentDelayMillis = Math.min(currentDelayMillis * 2, maxDelayMillis);
   }
 
-  public void reset() { currentDelayMillis = initialDelayMillis; }
+  public void reset() {
+    currentDelayMillis = initialDelayMillis;
+  }
 }
