@@ -9,6 +9,7 @@ import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
+import pt.ulisboa.tecnico.tuplespaces.client.util.ExponentialBackoff;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
@@ -145,6 +146,7 @@ public class ClientService {
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
+    ExponentialBackoff backoff = new ExponentialBackoff(100, 100000);
     ArrayList<String> phase1_result = new ArrayList<>();
     List<List<String>> phase1_responses;
     ResponseCollector c2 = new ResponseCollector();
@@ -191,12 +193,11 @@ public class ClientService {
             stubs[id].takePhase1Release(release_request, new ResponseObserver<>(c3));
           }
           c2.waitUntilNReceived(numServers);
-          // sleep :TODO: do this in a better way (random and increasing)
-          Thread.sleep(3000);
-          // repeat phase 1
+          // sleep :TODO: do this in a better way (random and increasing)          // repeat phase 1
+          backoff.backoff();
         } else { // if we have a majority of non-empty lists
           // sleep :TODO: do this in a better way (random and increasing)
-          Thread.sleep(3000);
+          backoff.backoff();
           // repeat phase 1
         }
 
