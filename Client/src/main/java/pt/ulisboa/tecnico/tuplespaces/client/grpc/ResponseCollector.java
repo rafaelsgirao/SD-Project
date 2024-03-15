@@ -2,10 +2,11 @@ package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 
 import java.lang.System.Logger;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ResponseCollector {
-  ArrayList<String> collectedResponses;
-  ArrayList<ArrayList<String>> tupleLists;
+  List<String> collectedResponses;
+  List<List<String>> tupleLists;
   private int received;
   private boolean success;
   private static final Logger logger = System.getLogger(ResponseCollector.class.getName());
@@ -31,17 +32,17 @@ public class ResponseCollector {
     notifyAll();
   }
 
-  public synchronized void addResponse(ArrayList<String> response) {
+  public synchronized void addResponse(List<String> response) {
     this.received++;
     this.tupleLists.add(response);
     notifyAll();
   }
 
-  public synchronized ArrayList<String> getResponses() {
+  public synchronized List<String> getResponses() {
     return this.collectedResponses;
   }
 
-  public synchronized ArrayList<ArrayList<String>> getTupleLists() {
+  public synchronized List<List<String>> getTupleLists() {
     return this.tupleLists;
   }
 

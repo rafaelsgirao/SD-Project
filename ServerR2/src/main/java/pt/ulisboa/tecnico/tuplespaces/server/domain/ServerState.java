@@ -72,7 +72,7 @@ public class ServerState {
   }
 
   public ServerState() {
-    this.tuples = new CopyOnWriteArrayList<Tuple>();
+    this.tuples = new CopyOnWriteArrayList<>();
   }
 
   public synchronized void put(String tupleString) {
@@ -106,19 +106,9 @@ public class ServerState {
     return tuple.getTuple();
   }
 
-  /*
-   * public synchronized String take(String pattern) {
-   * String tuple = read(pattern);
-   * if (tuple != null) {
-   * tuples.remove(tuple);
-   * }
-   * return tuple;
-   * }
-   */
-
   public synchronized List<String> takePhase1(int clientId, String pattern) {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
-    List<String> resultTuples = new ArrayList<String>();
+    List<String> resultTuples = new ArrayList<>();
     // According to faculty, a tuple that can't be locked shouldn't cause
     // the whole takephase1 process to abort.
     while (resultTuples.isEmpty()) {
@@ -173,7 +163,7 @@ public class ServerState {
   }
 
   public synchronized List<String> getTupleSpacesState() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (Tuple tuple : this.tuples) {
       result.add(tuple.getTuple());
     }

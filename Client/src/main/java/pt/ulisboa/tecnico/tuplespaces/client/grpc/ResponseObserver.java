@@ -11,7 +11,7 @@ public class ResponseObserver<R> implements StreamObserver<R> {
 
   ResponseCollector collector;
 
-  private static final Logger logger = System.getLogger(ResponseCollector.class.getName());
+  private static final Logger logger = System.getLogger(ResponseObserver.class.getName());
 
   public ResponseObserver(ResponseCollector c) {
     this.collector = c;
@@ -32,14 +32,14 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   }
 
   public void onNext(TakePhase1Response r) {
-    ArrayList<String> reservedTuples = new ArrayList<String>();
+    ArrayList<String> reservedTuples = new ArrayList<>();
     reservedTuples.addAll(r.getReservedTuplesList());
     collector.addResponse(reservedTuples);
     logger.log(Logger.Level.DEBUG, "[TAKE PHASE 1] Received response\n" + r);
   }
 
   public void onNext(getTupleSpacesStateResponse r) {
-    ArrayList<String> reservedTuples = new ArrayList<String>();
+    ArrayList<String> reservedTuples = new ArrayList<>();
     reservedTuples.addAll(r.getTupleList());
     collector.addResponse(reservedTuples);
     logger.log(Logger.Level.DEBUG, "[GetTupleSpacesState] Received response\n" + r);

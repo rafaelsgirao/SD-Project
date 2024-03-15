@@ -146,7 +146,7 @@ public class ClientService {
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     // Phase 1
     ArrayList<String> phase1_result = new ArrayList<>();
-    ArrayList<ArrayList<String>> phase1_responses;
+    List<List<String>> phase1_responses;
     ResponseCollector c2 = new ResponseCollector();
     do {
       logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 start loop\n");
@@ -175,7 +175,7 @@ public class ClientService {
       phase1_result.addAll(phase1_responses.get(0));
       phase1_responses.remove(0);
       int emptyLists = 0;
-      for (ArrayList<String> response : phase1_responses) {
+      for (List<String> response : phase1_responses) {
         if (response.isEmpty()) {
           emptyLists++;
         }

@@ -52,6 +52,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
+  @Override
   public void takePhase1(
       TakePhase1Request request, StreamObserver<TakePhase1Response> responseObserver) {
     String pattern = request.getSearchPattern();
@@ -73,6 +74,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
+  @Override
   public void takePhase1Release(
       TakePhase1ReleaseRequest request,
       StreamObserver<TakePhase1ReleaseResponse> responseObserver) {
@@ -88,6 +90,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
     responseObserver.onCompleted();
   }
 
+  @Override
   public void takePhase2(
       TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
     String tuple = request.getTuple().replace("\n", "");
