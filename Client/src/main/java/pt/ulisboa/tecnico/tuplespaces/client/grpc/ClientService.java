@@ -181,9 +181,7 @@ public class ClientService {
         }
         phase1_result.retainAll(response);
       }
-
       if (phase1_result.isEmpty()) {
-        System.err.println("number of empty lists" + emptyLists);
 
         if (emptyLists > numServers / 2) { // if we have a majority of empty lists
           // release request

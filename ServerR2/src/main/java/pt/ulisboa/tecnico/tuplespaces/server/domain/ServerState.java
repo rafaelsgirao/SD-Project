@@ -121,6 +121,7 @@ public class ServerState {
         }
         if (resultTuples.isEmpty()) {
           wait();
+          matchingTuples = getMatchingTuples(pattern);
         }
       } catch (InterruptedException e) {
         logger.log(Logger.Level.ERROR, "takePhase1: {0}", e);
