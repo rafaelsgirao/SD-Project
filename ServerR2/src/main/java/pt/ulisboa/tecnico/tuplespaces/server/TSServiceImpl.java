@@ -70,6 +70,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
       return;
     }
     List<String> tuples = state.takePhase1(clientId, pattern);
+    System.out.println("Client locked tuples: " + tuples);
     responseObserver.onNext(TakePhase1Response.newBuilder().addAllReservedTuples(tuples).build());
     responseObserver.onCompleted();
   }

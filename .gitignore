@@ -244,4 +244,4 @@ $RECYCLE.BIN/
 .vscode
 tests/test-outputs
 
-venv
+.venv/

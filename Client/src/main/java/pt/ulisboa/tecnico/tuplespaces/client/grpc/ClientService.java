@@ -175,7 +175,6 @@ public class ClientService {
       // Perform intersection of all responses.
 
       phase1_result.addAll(phase1_responses.get(0));
-      phase1_responses.remove(0);
       int emptyLists = 0;
       for (List<String> response : phase1_responses) {
         if (response.isEmpty()) {
@@ -192,7 +191,7 @@ public class ClientService {
           for (Integer id : delayer) {
             stubs[id].takePhase1Release(release_request, new ResponseObserver<>(c3));
           }
-          c2.waitUntilNReceived(numServers);
+          c3.waitUntilNReceived(numServers);
           // sleep :TODO: do this in a better way (random and increasing)          // repeat phase 1
           backoff.backoff();
         } else { // if we have a majority of non-empty lists

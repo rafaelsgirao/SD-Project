@@ -109,17 +109,26 @@ public class ServerState {
   public synchronized List<String> takePhase1(int clientId, String pattern) {
     List<Tuple> matchingTuples = getMatchingTuples(pattern);
     List<String> resultTuples = new ArrayList<>();
+    boolean lockedTuple = false;
     // According to faculty, a tuple that can't be locked shouldn't cause
     // the whole takephase1 process to abort.
-    while (resultTuples.isEmpty()) {
+    while (resultTuples.isEmpty() && !lockedTuple) {
+      lockedTuple = false;
       try {
         for (Tuple tuple : matchingTuples) {
           if (tuple.acquireLock(clientId)) {
             logger.log(Logger.Level.DEBUG, "takePhase1: {0} locked", tuple.getTuple());
             resultTuples.add(tuple.getTuple());
           }
+          // Tuple was locked by another client
+          else {
+            logger.log(Logger.Level.DEBUG, "takePhase1: {0} couldn't be locked", tuple.getTuple());
+            System.out.println("Couldn't lock tuple: " + tuple.getTuple());
+            lockedTuple = true;
+          }
         }
-        if (resultTuples.isEmpty()) {
+        // If no tuple were found and no tuple was locked, wait for a new tuple
+        if (resultTuples.isEmpty() && !lockedTuple) {
           wait();
           matchingTuples = getMatchingTuples(pattern);
         }
@@ -137,6 +146,7 @@ public class ServerState {
   public synchronized void takeRelease(int clientId) {
     for (Tuple tuple : this.tuples) {
       tuple.releaseLock(clientId);
+      System.out.println("Releasing lock on tuple: " + tuple.getTuple());
     }
   }
 
