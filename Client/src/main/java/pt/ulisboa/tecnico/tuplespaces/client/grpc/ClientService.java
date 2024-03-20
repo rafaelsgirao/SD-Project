@@ -8,6 +8,9 @@ import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
+import pt.ulisboa.tecnico.sequencer.contract.SequencerGrpc;
+import pt.ulisboa.tecnico.sequencer.contract.SequencerOuterClass.GetSeqNumberRequest;
+import pt.ulisboa.tecnico.sequencer.contract.SequencerOuterClass.GetSeqNumberResponse;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
 import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaGrpc;
 import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaTotalOrder.*;
@@ -27,6 +30,14 @@ public class ClientService {
 
   // Nameserver's host and port
   private static final String NAMESERVER_TARGET = "localhost:5001";
+
+  // Sequencer's host and port
+  private static final String SEQUENCER_TARGET = "localhost:8080";
+
+  // Channel and stubg for sequencer
+  private ManagedChannel channelSEQ;
+
+  private SequencerGrpc.SequencerBlockingStub stubSEQ;
 
   // Server's Service name
   private static final String SERVICE_NAME = "TupleSpaces";
@@ -56,11 +67,19 @@ public class ClientService {
     return response_ns.getResultList();
   }
 
+  public Integer getSequencerNumber() {
+    GetSeqNumberRequest request = GetSeqNumberRequest.getDefaultInstance();
+    GetSeqNumberResponse response = stubSEQ.getSeqNumber(request);
+    System.out.println("SeqNumber: " + response.getSeqNumber());
+    return response.getSeqNumber();
+  }
+
   public ClientService(int numServers, int ID) {
     this.numServers = numServers;
     channels = new ManagedChannel[numServers];
     stubs = new TupleSpacesReplicaGrpc.TupleSpacesReplicaStub[numServers];
-
+    channelSEQ = ManagedChannelBuilder.forTarget(SEQUENCER_TARGET).usePlaintext().build();
+    stubSEQ = SequencerGrpc.newBlockingStub(channelSEQ);
     this.clientId = ID;
 
     for (int i = 0; i < numServers; i++) {
@@ -83,13 +102,14 @@ public class ClientService {
     for (ManagedChannel channel : channels) {
       channel.shutdown();
     }
+    channelSEQ.shutdown();
   }
 
   public String put(String tuple) throws StatusRuntimeException, InterruptedException {
-
     ResponseCollector c = new ResponseCollector();
 
-    PutRequest request = PutRequest.newBuilder().setNewTuple(tuple).build();
+    PutRequest request =
+        PutRequest.newBuilder().setNewTuple(tuple).setSeqNumber(getSequencerNumber()).build();
 
     for (Integer id : delayer) {
       stubs[id].put(request, new ResponseObserver<>(c));
@@ -140,7 +160,11 @@ public class ClientService {
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
     ResponseCollector c = new ResponseCollector();
-    TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
+    TakeRequest request =
+        TakeRequest.newBuilder()
+            .setSearchPattern(pattern)
+            .setSeqNumber(getSequencerNumber())
+            .build();
 
     for (Integer id : delayer) {
       stubs[id].take(request, new ResponseObserver<>(c));
