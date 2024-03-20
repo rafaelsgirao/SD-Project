@@ -11,21 +11,17 @@ public class ServerState {
 
   private List<String> tuples;
 
-  final Lock counterLock = new ReentrantLock();
-  final Lock tupleLock = new ReentrantLock();
-  final Condition counterCond = counterLock.newCondition();
-  final Condition tupleCond = tupleLock.newCondition();
+  final Lock lock = new ReentrantLock();
+  final Condition counterCond = lock.newCondition();
+  final Condition tupleCond = lock.newCondition();
 
   private SequencerCounter sequencerCounter = new SequencerCounter();
 
   class SequencerCounter {
     private int counter = 1;
 
-    // TODO?
-    // private final ReentrantLock lock = new ReentrantLock();
-
     public void getCounterAndIncrement(int seqNum) {
-      counterLock.lock();
+      lock.lock();
       try {
         while (seqNum != counter) {
           System.err.println("WAKEY WAKEY\nseqNum: " + seqNum + " counter: " + counter);
@@ -37,10 +33,9 @@ public class ServerState {
     }
 
     public void finishCurrent() {
-      // je suis une baguette omelette du fromage
       this.counter++;
       counterCond.signalAll();
-      counterLock.unlock();
+      lock.unlock();
     }
   }
 
@@ -51,9 +46,7 @@ public class ServerState {
   public void put(String tuple, Integer seqNum) {
     System.err.println("put: " + tuple + " seqNum: " + seqNum);
     sequencerCounter.getCounterAndIncrement(seqNum);
-    tupleLock.lock();
     tuples.add(tuple);
-    // TODO: difference between notifyAll and signalAll?
     tupleCond.signalAll();
     sequencerCounter.finishCurrent();
   }
@@ -69,23 +62,23 @@ public class ServerState {
 
   public String read(String pattern) {
     String tuple;
+    // If a tuple matches the pattern, let the client read it, lock-free.
     if ((tuple = getMatchingTuple(pattern)) != null) {
       return tuple;
     }
-    tupleLock.lock();
+    lock.lock();
     while ((tuple = getMatchingTuple(pattern)) == null) {
       try {
         tupleCond.await();
       } catch (InterruptedException e) {
         e.printStackTrace();
       } finally {
-        tupleLock.unlock();
+        lock.unlock();
       }
     }
     return tuple;
   }
 
-  // TODO: check if synchronized here is necessary/brings up same trouble as two put(s) out of order
   public String take(String pattern, Integer seqNum) {
     System.err.println("take: " + pattern + " seqNum: " + seqNum);
     sequencerCounter.getCounterAndIncrement(seqNum);
