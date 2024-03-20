@@ -3,9 +3,7 @@ package pt.ulisboa.tecnico.tuplespaces.client.grpc;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
 import java.util.ArrayList;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.ReadResponse;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.TakePhase1Response;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.getTupleSpacesStateResponse;
+import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaTotalOrder.*;
 
 public class ResponseObserver<R> implements StreamObserver<R> {
 
@@ -21,8 +19,8 @@ public class ResponseObserver<R> implements StreamObserver<R> {
   public void onNext(R r) {
     if (r instanceof ReadResponse) {
       onNext((ReadResponse) r);
-    } else if (r instanceof TakePhase1Response) {
-      onNext((TakePhase1Response) r);
+    } else if (r instanceof TakeResponse) {
+      onNext((TakeResponse) r);
     } else if (r instanceof getTupleSpacesStateResponse) {
       onNext((getTupleSpacesStateResponse) r);
     } else {
@@ -31,10 +29,9 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     }
   }
 
-  public void onNext(TakePhase1Response r) {
-    ArrayList<String> reservedTuples = new ArrayList<>(r.getReservedTuplesList());
-    collector.addResponse(reservedTuples);
-    logger.log(Logger.Level.DEBUG, "[TAKE PHASE 1] Received response\n" + r);
+  public void onNext(TakeResponse r) {
+    collector.addResponse(r.getResult());
+    logger.log(Logger.Level.DEBUG, "[TAKE] Received response\n" + r);
   }
 
   public void onNext(getTupleSpacesStateResponse r) {

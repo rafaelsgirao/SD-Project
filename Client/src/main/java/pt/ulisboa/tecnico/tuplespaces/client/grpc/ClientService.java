@@ -4,15 +4,13 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.lang.System.Logger;
-import java.util.ArrayList;
 import java.util.List;
 import pt.tecnico.grpc.NameServer.LookupRequest;
 import pt.tecnico.grpc.NameServer.LookupResponse;
 import pt.tecnico.grpc.NameServerServiceGrpc;
-import pt.ulisboa.tecnico.tuplespaces.client.util.ExponentialBackoff;
 import pt.ulisboa.tecnico.tuplespaces.client.util.OrderedDelayer;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
+import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaGrpc;
+import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaTotalOrder.*;
 
 /*
  * The gRPC client-side logic should be here.
@@ -141,78 +139,19 @@ public class ClientService {
   }
 
   public String take(String pattern) throws StatusRuntimeException, InterruptedException {
-    // Phase 1
-    ExponentialBackoff backoff = new ExponentialBackoff(100, 100000);
-    ArrayList<String> phase1_result = new ArrayList<>();
-    List<List<String>> phase1_responses;
-    ResponseCollector c2 = new ResponseCollector();
-    do {
-      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 start loop\n");
+    ResponseCollector c = new ResponseCollector();
+    TakeRequest request = TakeRequest.newBuilder().setSearchPattern(pattern).build();
 
-      ResponseCollector c1 = new ResponseCollector();
-
-      ResponseCollector c3 = new ResponseCollector();
-
-      TakePhase1Request phase1_request =
-          TakePhase1Request.newBuilder()
-              .setSearchPattern(pattern)
-              .setClientId(this.clientId)
-              .build();
-
-      for (Integer id : delayer) {
-        stubs[id].takePhase1(phase1_request, new ResponseObserver<>(c1));
-      }
-      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 WAIT\n");
-      c1.waitUntilNReceived(numServers);
-      logger.log(Logger.Level.DEBUG, "[TAKE] Phase1 finish\n");
-
-      phase1_responses = c1.getTupleLists();
-
-      // Perform intersection of all responses.
-
-      phase1_result.addAll(phase1_responses.get(0));
-      int emptyLists = 0;
-      for (List<String> response : phase1_responses) {
-        if (response.isEmpty()) {
-          emptyLists++;
-        }
-        phase1_result.retainAll(response);
-      }
-      if (phase1_result.isEmpty()) {
-
-        if (emptyLists > numServers / 2) { // if we have a majority of empty lists
-          // release request
-          TakePhase1ReleaseRequest release_request =
-              TakePhase1ReleaseRequest.newBuilder().setClientId(this.clientId).build();
-          for (Integer id : delayer) {
-            stubs[id].takePhase1Release(release_request, new ResponseObserver<>(c3));
-          }
-          c3.waitUntilNReceived(numServers);
-          backoff.backoff();
-        } else { // if we have a majority of non-empty lists
-          backoff.backoff();
-          // repeat phase 1
-        }
-
-        logger.log(Logger.Level.WARNING, "phase1 intersection empty!");
-
-        // Reset phase1_responses to work with the original responses
-        // phase1_responses = c1.getTupleLists();
-      }
-    } while (phase1_result.isEmpty());
-
-    logger.log(Logger.Level.DEBUG, "phase1 results: {0}", phase1_result);
-
-    // Take the first tuple from intersection.
-    // what to do if empty?
-    String ourTuple = phase1_result.get(0);
-    TakePhase2Request phase2_request =
-        TakePhase2Request.newBuilder().setClientId(this.clientId).setTuple(ourTuple).build();
     for (Integer id : delayer) {
-      stubs[id].takePhase2(phase2_request, new ResponseObserver<>(c2));
+      stubs[id].take(request, new ResponseObserver<>(c));
     }
-    c2.waitUntilNReceived(numServers);
-    // communist tuple
-    return ourTuple;
+
+    c.waitUntilNReceived(numServers);
+
+    if (c.isFail()) {
+      return "ERR: take";
+    }
+
+    return c.getResponses().get(0);
   }
 }

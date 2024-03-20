@@ -5,8 +5,8 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import io.grpc.stub.StreamObserver;
 import java.lang.System.Logger;
 import java.util.List;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaGrpc;
-import pt.ulisboa.tecnico.tuplespaces.replicaXuLiskov.contract.TupleSpacesReplicaXuLiskov.*;
+import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaGrpc;
+import pt.ulisboa.tecnico.tuplespaces.replicaTotalOrder.contract.TupleSpacesReplicaTotalOrder.*;
 import pt.ulisboa.tecnico.tuplespaces.server.domain.ServerState;
 
 public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImplBase {
@@ -50,76 +50,17 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   }
 
   @Override
-  public void takePhase1(
-      TakePhase1Request request, StreamObserver<TakePhase1Response> responseObserver) {
+  public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
     String pattern = request.getSearchPattern();
-    int clientId = request.getClientId();
-    if (!clientIdIsValid(clientId)) {
-      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
-      responseObserver.onError(
-          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
-      return;
-    }
     if (!patternIsValid(pattern)) {
       logger.log(Logger.Level.WARNING, "Invalid search pattern {0}", pattern);
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
     }
-    List<String> tuples = state.takePhase1(clientId, pattern);
-    System.out.println("Client locked tuples: " + tuples);
-    responseObserver.onNext(TakePhase1Response.newBuilder().addAllReservedTuples(tuples).build());
-    responseObserver.onCompleted();
-  }
-
-  @Override
-  public void takePhase1Release(
-      TakePhase1ReleaseRequest request,
-      StreamObserver<TakePhase1ReleaseResponse> responseObserver) {
-    int clientId = request.getClientId();
-    if (!clientIdIsValid(clientId)) {
-      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
-      responseObserver.onError(
-          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
-      return;
-    }
-    state.takeRelease(clientId);
-    responseObserver.onNext(TakePhase1ReleaseResponse.getDefaultInstance());
-    responseObserver.onCompleted();
-  }
-
-  @Override
-  public void takePhase2(
-      TakePhase2Request request, StreamObserver<TakePhase2Response> responseObserver) {
-    String tuple = request.getTuple().replace("\n", "");
-    System.err.println("Tuple do servidor: " + tuple);
-
-    int clientId = request.getClientId();
-    if (!clientIdIsValid(clientId)) {
-      logger.log(Logger.Level.WARNING, "Invalid client id {0}", clientId);
-      responseObserver.onError(
-          INVALID_ARGUMENT.withDescription("Invalid client id.").asRuntimeException());
-      return;
-    }
-    if (!tupleIsValid(tuple)) {
-      logger.log(Logger.Level.WARNING, "Invalid tuple {0}", tuple);
-      responseObserver.onError(
-          INVALID_ARGUMENT.withDescription("Invalid tuple.").asRuntimeException());
-      return;
-    }
-
-    if (!state.takePhase2(tuple, clientId)) {
-      responseObserver.onError(
-          INVALID_ARGUMENT
-              .withDescription(
-                  "takePhase2: Failed to take tuple " + tuple + "for client " + clientId)
-              .asRuntimeException());
-      logger.log(Logger.Level.ERROR, "takePhase2 failed: {0}", state.getTupleSpacesState());
-      return;
-    }
-    state.takeRelease(clientId);
-
-    responseObserver.onNext(TakePhase2Response.getDefaultInstance());
+    String tuple = state.take(pattern);
+    System.out.println("Client took tuple: " + tuple);
+    responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
     responseObserver.onCompleted();
   }
 
