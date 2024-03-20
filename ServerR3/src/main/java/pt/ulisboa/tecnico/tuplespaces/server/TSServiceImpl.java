@@ -21,13 +21,14 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   @Override
   public void put(PutRequest request, StreamObserver<PutResponse> responseObserver) {
     String newTuple = request.getNewTuple();
+    Integer seqNumber = request.getSeqNumber();
     if (!tupleIsValid(newTuple)) {
       logger.log(Logger.Level.DEBUG, "Invalid tuple.");
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid tuple.").asRuntimeException());
       return;
     }
-    state.put(newTuple);
+    state.put(newTuple, seqNumber);
     System.out.println("Tuple added: " + newTuple);
     responseObserver.onNext(PutResponse.getDefaultInstance());
     responseObserver.onCompleted();
@@ -52,13 +53,14 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   @Override
   public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
     String pattern = request.getSearchPattern();
+    int seqNumber = request.getSeqNumber();
     if (!patternIsValid(pattern)) {
       logger.log(Logger.Level.WARNING, "Invalid search pattern {0}", pattern);
       responseObserver.onError(
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
     }
-    String tuple = state.take(pattern);
+    String tuple = state.take(pattern, seqNumber);
     System.out.println("Client took tuple: " + tuple);
     responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
     responseObserver.onCompleted();
@@ -78,9 +80,6 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
   }
 
   // Utils
-  private boolean clientIdIsValid(int clientId) {
-    return clientId > 0;
-  }
 
   private boolean tupleIsValid(String input) {
     return !input.contains(" ") && input.startsWith(BGN_TUPLE) && input.endsWith(END_TUPLE);

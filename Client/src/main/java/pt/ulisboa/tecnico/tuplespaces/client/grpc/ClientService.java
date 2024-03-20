@@ -70,7 +70,7 @@ public class ClientService {
   public Integer getSequencerNumber() {
     GetSeqNumberRequest request = GetSeqNumberRequest.getDefaultInstance();
     GetSeqNumberResponse response = stubSEQ.getSeqNumber(request);
-    System.out.println("SeqNumber: " + response.getSeqNumber());
+    // TODO: logger System.out.println("SeqNumber: " + response.getSeqNumber());
     return response.getSeqNumber();
   }
 
