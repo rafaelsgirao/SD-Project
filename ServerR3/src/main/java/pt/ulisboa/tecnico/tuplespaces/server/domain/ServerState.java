@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.tuplespaces.server.domain;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -10,22 +11,49 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ServerState {
 
   private List<String> tuples;
+  // TODO: copy on write PriorityQueue? or PriorityBlockingQueue?
+  PriorityQueue<Request> requestQueue = new PriorityQueue<>();
 
   final Lock lock = new ReentrantLock();
-  final Condition counterCond = lock.newCondition();
-  final Condition tupleCond = lock.newCondition();
+  final Condition tupleCond = lock.newCondition(); // TODO :remove
 
-  private SequencerCounter sequencerCounter = new SequencerCounter();
+  private SequencerManager sequencerManager = new SequencerManager();
 
-  class SequencerCounter {
+  class Request implements Comparable<Request> {
+    private final Condition requestCond;
+    private final int seqNumber;
+
+    public Request(int seqNumber) {
+      this.seqNumber = seqNumber;
+      this.requestCond = lock.newCondition();
+    }
+
+    public int getSeqNumber() {
+      return seqNumber;
+    }
+
+    public Condition getCondition() {
+      return requestCond;
+    }
+
+    @Override
+    public int compareTo(Request otherRequest) {
+      return Integer.compare(seqNumber, otherRequest.seqNumber);
+    }
+  }
+
+  class SequencerManager {
     private int counter = 1;
 
-    public void getCounterAndIncrement(int seqNum) {
+    public void execOrWait(Request request) {
+      int requestNum = request.getSeqNumber();
+      Condition requestCond = request.getCondition();
       lock.lock();
       try {
-        while (seqNum != counter) {
-          System.err.println("WAKEY WAKEY\nseqNum: " + seqNum + " counter: " + counter);
-          counterCond.await();
+        while (requestNum != counter) {
+          requestQueue.add(request);
+          requestCond.await();
+          System.err.println("WAKEY WAKEY\nseqNum: " + requestNum + " counter: " + counter);
         }
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -34,7 +62,10 @@ public class ServerState {
 
     public void finishCurrent() {
       this.counter++;
-      counterCond.signalAll();
+      if (!requestQueue.isEmpty() && requestQueue.peek().getSeqNumber() == counter) {
+        System.err.println("Next request n=" + counter + " is available, waking it.");
+        requestQueue.poll().getCondition().signal();
+      }
       lock.unlock();
     }
   }
@@ -45,10 +76,11 @@ public class ServerState {
 
   public void put(String tuple, Integer seqNum) {
     System.err.println("put: " + tuple + " seqNum: " + seqNum);
-    sequencerCounter.getCounterAndIncrement(seqNum);
+    Request request = new Request(seqNum);
+    sequencerManager.execOrWait(request);
     tuples.add(tuple);
     tupleCond.signalAll();
-    sequencerCounter.finishCurrent();
+    sequencerManager.finishCurrent();
   }
 
   private String getMatchingTuple(String pattern) {
@@ -81,12 +113,13 @@ public class ServerState {
 
   public String take(String pattern, Integer seqNum) {
     System.err.println("take: " + pattern + " seqNum: " + seqNum);
-    sequencerCounter.getCounterAndIncrement(seqNum);
+    Request request = new Request(seqNum);
+    sequencerManager.execOrWait(request);
     String tuple = read(pattern);
     if (tuple != null) {
       tuples.remove(tuple);
     }
-    sequencerCounter.finishCurrent();
+    sequencerManager.finishCurrent();
     return tuple;
   }
 
