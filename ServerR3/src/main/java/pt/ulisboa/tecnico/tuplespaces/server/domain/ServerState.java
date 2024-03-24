@@ -13,9 +13,9 @@ public class ServerState {
   private List<String> tuples;
   // TODO: copy on write PriorityQueue? or PriorityBlockingQueue?
   PriorityQueue<Request> requestQueue = new PriorityQueue<>();
-
+  List<Request> waitingTakes = new CopyOnWriteArrayList<>();
   final Lock lock = new ReentrantLock();
-  final Condition tupleCond = lock.newCondition(); // TODO :remove
+  final Condition readCond = lock.newCondition();
 
   private SequencerManager sequencerManager = new SequencerManager();
 
@@ -44,6 +44,15 @@ public class ServerState {
 
   class SequencerManager {
     private int counter = 1;
+    private Request currentRequest;
+
+    public Request getCurrentRequest() {
+      return currentRequest;
+    }
+
+    public void setCurrentRequest(Request request) {
+      this.currentRequest = request;
+    }
 
     public void execOrWait(Request request) {
       int requestNum = request.getSeqNumber();
@@ -58,15 +67,19 @@ public class ServerState {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+      setCurrentRequest(request);
     }
 
-    public void finishCurrent() {
+    public void finishCurrent(boolean unlock) {
+      setCurrentRequest(null);
       this.counter++;
       if (!requestQueue.isEmpty() && requestQueue.peek().getSeqNumber() == counter) {
         System.err.println("Next request n=" + counter + " is available, waking it.");
         requestQueue.poll().getCondition().signal();
       }
-      lock.unlock();
+      if (unlock) {
+        lock.unlock();
+      }
     }
   }
 
@@ -74,13 +87,21 @@ public class ServerState {
     this.tuples = new CopyOnWriteArrayList<>();
   }
 
+  public void executeWaitingTakes() {
+    if (this.waitingTakes.size() > 0) {
+      Request firstRequest = this.waitingTakes.get(0);
+      firstRequest.getCondition().signal();
+    }
+  }
+
   public void put(String tuple, Integer seqNum) {
     System.err.println("put: " + tuple + " seqNum: " + seqNum);
     Request request = new Request(seqNum);
     sequencerManager.execOrWait(request);
     tuples.add(tuple);
-    tupleCond.signalAll();
-    sequencerManager.finishCurrent();
+    readCond.signalAll();
+    executeWaitingTakes();
+    sequencerManager.finishCurrent(true);
   }
 
   private String getMatchingTuple(String pattern) {
@@ -99,27 +120,65 @@ public class ServerState {
       return tuple;
     }
     lock.lock();
-    while ((tuple = getMatchingTuple(pattern)) == null) {
-      try {
-        tupleCond.await();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } finally {
-        lock.unlock();
+    try {
+
+      while ((tuple = getMatchingTuple(pattern)) == null) {
+        readCond.await();
       }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } finally {
+      lock.unlock();
     }
     return tuple;
   }
 
-  public String take(String pattern, Integer seqNum) {
+  public String take(String pattern, Integer seqNum) throws InterruptedException {
     System.err.println("take: " + pattern + " seqNum: " + seqNum);
     Request request = new Request(seqNum);
+    Request currentRequest = null;
     sequencerManager.execOrWait(request);
-    String tuple = read(pattern);
+    String tuple;
+
+    // tuple was already stored
+    if ((tuple = getMatchingTuple(pattern)) != null) {
+      if (tuple != null) {
+        tuples.remove(tuple);
+      }
+      sequencerManager.finishCurrent(true);
+      return tuple;
+    }
+
+    // need to sleep until tuple requested is available
+    sequencerManager.finishCurrent(false);
+    waitingTakes.add(request);
+
+    do {
+      int ourIndex = waitingTakes.indexOf(request);
+      if (ourIndex != -1 && ourIndex < (waitingTakes.size() - 1)) {
+        Request nextTake = waitingTakes.get(ourIndex + 1);
+        nextTake.getCondition().signal();
+      }
+      // Case where we're the last take in the queue
+      else if (ourIndex == waitingTakes.size() - 1
+          && (currentRequest = sequencerManager.getCurrentRequest()) != null) {
+
+        currentRequest.getCondition().signal();
+      }
+
+      request.getCondition().await();
+    } while ((tuple = getMatchingTuple(pattern)) == null);
+
     if (tuple != null) {
       tuples.remove(tuple);
     }
-    sequencerManager.finishCurrent();
+
+    waitingTakes.remove(request);
+
+    if ((currentRequest = sequencerManager.getCurrentRequest()) != null) {
+      currentRequest.getCondition().signal();
+    }
+    lock.unlock();
     return tuple;
   }
 

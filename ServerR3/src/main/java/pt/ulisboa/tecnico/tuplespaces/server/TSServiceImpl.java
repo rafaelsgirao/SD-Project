@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.tuplespaces.server;
 
+import static io.grpc.Status.ABORTED;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 import io.grpc.stub.StreamObserver;
@@ -52,6 +53,7 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
 
   @Override
   public void take(TakeRequest request, StreamObserver<TakeResponse> responseObserver) {
+    String tuple;
     String pattern = request.getSearchPattern();
     int seqNumber = request.getSeqNumber();
     if (!patternIsValid(pattern)) {
@@ -60,7 +62,14 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
           INVALID_ARGUMENT.withDescription("Invalid search pattern.").asRuntimeException());
       return;
     }
-    String tuple = state.take(pattern, seqNumber);
+    try {
+      tuple = state.take(pattern, seqNumber);
+    } catch (InterruptedException e) {
+      responseObserver.onError(
+          ABORTED.withDescription("Server caught InterruptedException.").asRuntimeException());
+      return;
+    }
+
     System.out.println("Client took tuple: " + tuple);
     responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
     responseObserver.onCompleted();
