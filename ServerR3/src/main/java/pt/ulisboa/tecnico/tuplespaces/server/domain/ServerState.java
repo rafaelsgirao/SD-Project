@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.tuplespaces.server.domain;
 
+import java.lang.System.Logger;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -11,7 +12,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ServerState {
 
   private List<String> tuples;
-  // TODO: copy on write PriorityQueue? or PriorityBlockingQueue?
+
+  private static final Logger logger = System.getLogger(ServerState.class.getName());
+
   PriorityQueue<Request> requestQueue = new PriorityQueue<>();
   List<Request> waitingTakes = new CopyOnWriteArrayList<>();
   final Lock lock = new ReentrantLock();
@@ -62,7 +65,6 @@ public class ServerState {
         while (requestNum != counter) {
           requestQueue.add(request);
           requestCond.await();
-          System.err.println("WAKEY WAKEY\nseqNum: " + requestNum + " counter: " + counter);
         }
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -74,7 +76,7 @@ public class ServerState {
       setCurrentRequest(null);
       this.counter++;
       if (!requestQueue.isEmpty() && requestQueue.peek().getSeqNumber() == counter) {
-        System.err.println("Next request n=" + counter + " is available, waking it.");
+        logger.log(Logger.Level.DEBUG, "Next request n=" + counter + " is available, waking it.");
         requestQueue.poll().getCondition().signal();
       }
       if (unlock) {
@@ -96,7 +98,7 @@ public class ServerState {
   }
 
   public void put(String tuple, Integer seqNum) {
-    System.err.println("put: " + tuple + " seqNum: " + seqNum);
+    logger.log(Logger.Level.DEBUG, "put: " + tuple + " seqNum: " + seqNum);
     Request request = new Request(seqNum);
     sequencerManager.execOrWait(request);
     tuples.add(tuple);
@@ -135,7 +137,8 @@ public class ServerState {
   }
 
   public String take(String pattern, Integer seqNum) throws InterruptedException {
-    System.err.println("take: " + pattern + " seqNum: " + seqNum);
+    logger.log(Logger.Level.DEBUG, "take: " + pattern + " seqNum: " + seqNum);
+
     Request request = new Request(seqNum);
     Request currentRequest = null;
     sequencerManager.execOrWait(request);
