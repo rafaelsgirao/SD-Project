@@ -90,6 +90,7 @@ public class ServerState {
   public void executeWaitingTakes() {
     if (this.waitingTakes.size() > 0) {
       Request firstRequest = this.waitingTakes.get(0);
+
       firstRequest.getCondition().signal();
     }
   }
@@ -99,8 +100,8 @@ public class ServerState {
     Request request = new Request(seqNum);
     sequencerManager.execOrWait(request);
     tuples.add(tuple);
-    readCond.signalAll();
     executeWaitingTakes();
+    readCond.signalAll();
     sequencerManager.finishCurrent(true);
   }
 

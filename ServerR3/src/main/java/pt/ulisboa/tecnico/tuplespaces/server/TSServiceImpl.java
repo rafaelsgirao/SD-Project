@@ -69,7 +69,8 @@ public class TSServiceImpl extends TupleSpacesReplicaGrpc.TupleSpacesReplicaImpl
           ABORTED.withDescription("Server caught InterruptedException.").asRuntimeException());
       return;
     }
-
+    // Even though stdout prints may not appear in the right order,
+    // ServerState guarantees a total order in processing requests.
     System.out.println("Client took tuple: " + tuple);
     responseObserver.onNext(TakeResponse.newBuilder().setResult(tuple).build());
     responseObserver.onCompleted();
