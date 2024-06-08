@@ -1,7 +1,10 @@
 {
   inputs = {
     nixpkgs.url = "flake:nixpkgs";
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
     pre-commit-hooks-nix = {
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -105,7 +108,7 @@
           deadnix.enable = true;
           statix.enable = true;
           black.enable = true;
-          # ruff.enable = true;
+          ruff.enable = true;
         };
       };
     };

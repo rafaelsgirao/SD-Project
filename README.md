@@ -4,22 +4,22 @@ Distributed Systems Project 2024
 
 **Group A18**
 
-*(choose one of the following levels and erase the other one)*\
+_(choose one of the following levels and erase the other one)_\
 **Difficulty level: I am Death incarnate!**
 
 ### Code Identification
 
-In all source files (namely in the *groupId*s of the POMs), replace __GXX__ with your group identifier. The group
+In all source files (namely in the *groupId*s of the POMs), replace **GXX** with your group identifier. The group
 identifier consists of either A or T followed by the group number - always two digits. This change is important for
 code dependency management, to ensure your code runs using the correct components and not someone else's.
 
 ### Team Members
 
-| Number | Name              | User                             | Email                               |
-|--------|-------------------|----------------------------------|-------------------------------------|
-| 99309  | Rafael Girão      | <https://github.com/rafaelsgirao>   | <mailto:rafael.s.girao@tecnico.ulisboa.pt>   |
-| 102082  | Simão Sanguinho       | <https://github.com/simaosanguinho>     | <mailto:simao.sanguinho@tecnico.ulisboa.pt>     |
-| 103252  | José Pereira | <https://github.com/pereira0x> | <mailto:jose.a.pereira@tecnico.ulisboa.pt> |
+| Number | Name            | User                                | Email                                       |
+| ------ | --------------- | ----------------------------------- | ------------------------------------------- |
+| 99309  | Rafael Girão    | <https://github.com/rafaelsgirao>   | <mailto:rafael.s.girao@tecnico.ulisboa.pt>  |
+| 102082 | Simão Sanguinho | <https://github.com/simaosanguinho> | <mailto:simao.sanguinho@tecnico.ulisboa.pt> |
+| 103252 | José Pereira    | <https://github.com/pereira0x>      | <mailto:jose.a.pereira@tecnico.ulisboa.pt>  |
 
 ## Getting Started
 
